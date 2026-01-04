@@ -1,0 +1,34 @@
+# Large folders to ignore
+6_models/
+7_logs/
+8_results/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Virtual env
+venv/
+env/
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Model files
+*.pt
+*.pth
+*.pkl
+*.h5
