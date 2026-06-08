@@ -33,10 +33,10 @@ class EnhancedAerialCombatEnv(gym.Env):
         noise_std: float = 0.0,
         latency_steps: int = 0,
         max_steps: int = 1000,
-        engagement_range: float = 500.0,
+        engagement_range: float = 600.0,
         fire_cone_deg: float = 30.0,
         agent_damage_per_step: float = 5.0,
-        opp_engagement_range: float = 600.0,
+        opp_engagement_range: float = 500.0,
         opp_damage_per_step: float = 3.0,
     ):
         """
@@ -96,16 +96,28 @@ class EnhancedAerialCombatEnv(gym.Env):
         self._damage_received = 0.0
         self._time_to_first_engagement = None
 
+        # Randomise starting positions so the policy must generalise
+        rng = self.np_random
+        pos_jitter = rng.uniform(-200.0, 200.0, size=2)   # x, y offset
+        alt_jitter  = rng.uniform(-100.0, 100.0)
+        hdg_jitter  = rng.uniform(-0.3, 0.3)
+
         self.agent_state = {
-            "position": np.array([0.0, 0.0, 1000.0], dtype=np.float64),
+            "position": np.array([0.0 + pos_jitter[0],
+                                  0.0 + pos_jitter[1],
+                                  1000.0 + alt_jitter], dtype=np.float64),
             "velocity": np.array([100.0, 0.0, 0.0], dtype=np.float64),
-            "heading": 0.0,
+            "heading": 0.0 + hdg_jitter,
             "health": 100.0,
         }
+
+        opp_jitter = rng.uniform(-200.0, 200.0, size=2)
         self.opponent_state = {
-            "position": np.array([1000.0, 0.0, 1000.0], dtype=np.float64),
+            "position": np.array([1000.0 + opp_jitter[0],
+                                  0.0 + opp_jitter[1],
+                                  1000.0 + alt_jitter], dtype=np.float64),
             "velocity": np.array([-80.0, 0.0, 0.0], dtype=np.float64),
-            "heading": np.pi,
+            "heading": np.pi + hdg_jitter,
             "health": 100.0,
         }
 

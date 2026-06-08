@@ -87,7 +87,7 @@ def train(
 
     for ep in range(20):
         ep_reward = 0.0
-        obs, _ = eval_env.reset()
+        obs, _ = eval_env.reset(seed=ep)   # different seed per episode for varied starts
         done = False
         ep_info = {}
 

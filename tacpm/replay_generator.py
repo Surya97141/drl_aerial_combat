@@ -17,7 +17,7 @@ from enhanced_env import EnhancedAerialCombatEnv
 
 def run_episode(env: EnhancedAerialCombatEnv, model, episode_id: int) -> dict:
     """Run one episode with the given policy and record every timestep."""
-    obs, _ = env.reset()
+    obs, _ = env.reset(seed=episode_id)  # unique seed per episode for varied starts
     timesteps = []
     ep_info = {}
 
@@ -120,7 +120,7 @@ def generate_replays(
     with open(save_path, "w") as f:
         json.dump(replays, f, indent=2)
 
-    print(f"Saved {n_episodes} replays → {save_path}")
+    print(f"Saved {n_episodes} replays -> {save_path}")
     return save_path
 
 
