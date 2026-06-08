@@ -1,0 +1,68 @@
+{
+  "total": 8,
+  "max": 11,
+  "grade": "C",
+  "verdict": "Needs work before submission",
+  "checks": [
+    {
+      "name": "Random seed fixed",
+      "passed": true,
+      "points": 2,
+      "detail": "Seed found in: test_environment.py",
+      "fix": "Add seed=42 to your training script and all eval scripts."
+    },
+    {
+      "name": "Multiple seed runs (\u22652)",
+      "passed": false,
+      "points": 0,
+      "detail": "No multiple-seed run directories found",
+      "fix": "Run each experiment with at least 3 seeds and report mean \u00b1 std. Single-seed results are not publishable."
+    },
+    {
+      "name": "Baseline comparison exists",
+      "passed": true,
+      "points": 2,
+      "detail": "Baseline directory found in archived_models/",
+      "fix": "Train and save a simple baseline to compare against. Without a baseline, improvement claims cannot be verified."
+    },
+    {
+      "name": "Dependencies documented",
+      "passed": true,
+      "points": 1,
+      "detail": "requirements.txt or environment file found",
+      "fix": "Add requirements.txt with pinned versions. Run: pip freeze > requirements.txt"
+    },
+    {
+      "name": "Model checkpoints saved",
+      "passed": true,
+      "points": 1,
+      "detail": "Found 4 checkpoint file(s)",
+      "fix": "Save model checkpoints during training so experiments can be reproduced."
+    },
+    {
+      "name": "Hyperparameters documented",
+      "passed": true,
+      "points": 1,
+      "detail": "Found 1 config file(s)",
+      "fix": "Save hyperparameters to a config.yaml file before each run."
+    },
+    {
+      "name": "Evaluation logs saved",
+      "passed": true,
+      "points": 1,
+      "detail": "Evaluation log file found",
+      "fix": "Save evaluation metrics to a log file during training. Use callbacks or manual logging after each epoch."
+    },
+    {
+      "name": "README exists",
+      "passed": false,
+      "points": 0,
+      "detail": "No README found",
+      "fix": "Add a README.md explaining how to run the experiments."
+    }
+  ],
+  "top_fixes": [
+    "Run each experiment with at least 3 seeds and report mean \u00b1 std. Single-seed results are not publishable.",
+    "Add a README.md explaining how to run the experiments."
+  ]
+}

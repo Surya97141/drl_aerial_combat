@@ -1,0 +1,97 @@
+{
+  "project_type": "REINFORCEMENT_LEARNING",
+  "task": "single_agent_rl",
+  "framework": "stable_baselines3",
+  "confidence": "HIGH",
+  "evidence": [
+    "The presence of ppo_logs and baseline model files suggests the use of stable baselines3",
+    "Experiment folder names include terms like 'ppo', 'maddpg', and 'sac', which are common RL algorithms",
+    "The existence of a 'ppo_checkpoint_200000_steps.zip' file indicates the use of PPO for training"
+  ],
+  "baseline_metric": {
+    "file": "ppo_logs/evaluations.npz",
+    "column": "results",
+    "file_type": "npz",
+    "higher_is_better": true,
+    "description": "Mean reward across 5 eval episodes"
+  },
+  "gaps": [
+    {
+      "name": "multiple_seeds",
+      "description": "Testing with multiple seeds to ensure reproducibility is missing",
+      "priority": "HIGH",
+      "experiment_type": "ablation",
+      "preconditions": [
+        "existence of a training script"
+      ],
+      "suggested_script": "Run the training script with different seeds to verify reproducibility"
+    },
+    {
+      "name": "ppo_vs_maddpg",
+      "description": "Comparison of PPO and MADDPG algorithms is missing",
+      "priority": "MEDIUM",
+      "experiment_type": "comparison",
+      "preconditions": [
+        "existence of a training script for both PPO and MADDPG"
+      ],
+      "suggested_script": "Run the training script with both PPO and MADDPG algorithms to compare performance"
+    },
+    {
+      "name": "sweep_of_hyperparameters",
+      "description": "A sweep of hyperparameters to find the optimal values is missing",
+      "priority": "LOW",
+      "experiment_type": "sweep",
+      "preconditions": [
+        "existence of a training script and a list of hyperparameters to sweep"
+      ],
+      "suggested_script": "Run the training script with a sweep of hyperparameters to find the optimal values"
+    }
+  ],
+  "repro_issues": [
+    {
+      "check_name": "multiple_seeds",
+      "passed": false,
+      "severity": "CRITICAL",
+      "detail": "Only a single seed is used for training, which may not be representative of the algorithm's performance",
+      "fix": "Use multiple seeds and report the average performance",
+      "universal": true
+    },
+    {
+      "check_name": "checkpoint_saving",
+      "passed": true,
+      "severity": "MINOR",
+      "detail": "Checkpoints are saved during training, which allows for reproducibility and continuation of training",
+      "fix": "Continue to save checkpoints during training",
+      "universal": false
+    }
+  ],
+  "hparam_patterns": [
+    {
+      "name": "learning_rate",
+      "pattern": "lr[_-]([0-9e.-]+)",
+      "values_seen": [
+        "0.001",
+        "0.0001"
+      ],
+      "higher_is_better": null
+    },
+    {
+      "name": "latency",
+      "pattern": "latency[_-]([0-9]+)ms",
+      "values_seen": [
+        "10",
+        "50",
+        "100"
+      ],
+      "higher_is_better": null
+    }
+  ],
+  "project_context": "The project uses a custom environment and the stable baselines3 library for reinforcement learning. The observation space is not explicitly defined, but the action space is discrete. The project has a structured folder organization, with separate folders for data, models, and logs. The training scripts are written in Python, and the results are saved in npz files. The project uses a combination of PPO and MADDPG algorithms for training. The dataset is not explicitly defined, but it appears to be a custom dataset for aerial combat.",
+  "primary_library": "stable_baselines3",
+  "result_save_path": "logs/metrics/",
+  "experiment_gap": [
+    "multiple_seeds",
+    "ppo_vs_maddpg",
+    "sweep_of_hyperparameters"
+  ]
+}

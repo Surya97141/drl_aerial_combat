@@ -1,0 +1,20 @@
+{
+  "shape": "HEALTHY",
+  "confidence": "MEDIUM",
+  "final_reward": 3671.2825474739075,
+  "peak_reward": 3936.4945877075197,
+  "start_reward": 3925.961948776245,
+  "total_steps": 500000,
+  "plateau_step": null,
+  "collapse_step": null,
+  "trend_slope": -19.571006928095493,
+  "variance": 419.10538032682325,
+  "ready_for_eval": true,
+  "insights": [
+    "Results improved from 3925.962 to 3671.283.",
+    "Curve shape looks healthy \u2014 no collapse or oscillation detected."
+  ],
+  "actions": [
+    "Continue training or begin comparison experiments."
+  ]
+}

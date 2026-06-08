@@ -1,0 +1,11 @@
+[
+  {
+    "gap": "latency_25ms never tested \u2014 gap between 10ms and 50ms",
+    "result_file": "logs/metrics/latency_25ms.csv",
+    "file_type": "csv",
+    "detected_at": "2026-03-04T13:06:01.266627",
+    "mean_reward": 3975.8,
+    "delta": 304.5174525260927,
+    "outcome": "improved"
+  }
+]

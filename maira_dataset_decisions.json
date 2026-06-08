@@ -1,0 +1,46 @@
+[
+  {
+    "file_path": "ppo_logs/evaluations.npz",
+    "dataset_type": "timeseries",
+    "total_records": 25,
+    "train_size": 17,
+    "val_size": 4,
+    "test_size": 4,
+    "split_ratio": "70/15/15",
+    "justification": [
+      "NPZ contains 25 evaluation checkpoints across training.",
+      "Timeseries split \u2014 no shuffle. Earlier checkpoints = train, later = test.",
+      "This tests whether MAIRA can predict performance trajectory from early training."
+    ]
+  },
+  {
+    "file_path": "data/analysis.json",
+    "dataset_type": "episodic",
+    "total_records": 10,
+    "train_size": 7,
+    "val_size": 1,
+    "test_size": 2,
+    "split_ratio": "70/15/15",
+    "justification": [
+      "Sorted by episode_id to preserve temporal order.",
+      "Small dataset (10 episodes) \u2014 using 70/15/15 split to preserve test integrity.",
+      "No random shuffle applied \u2014 episodic RL data has temporal dependency.",
+      "Test set uses final episodes \u2014 simulates evaluating on unseen future behavior."
+    ]
+  },
+  {
+    "file_path": "data/replays.json",
+    "dataset_type": "episodic",
+    "total_records": 10,
+    "train_size": 7,
+    "val_size": 1,
+    "test_size": 2,
+    "split_ratio": "70/15/15",
+    "justification": [
+      "Sorted by episode_id to preserve temporal order.",
+      "Small dataset (10 episodes) \u2014 using 70/15/15 split to preserve test integrity.",
+      "No random shuffle applied \u2014 episodic RL data has temporal dependency.",
+      "Test set uses final episodes \u2014 simulates evaluating on unseen future behavior."
+    ]
+  }
+]

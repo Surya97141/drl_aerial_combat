@@ -1,0 +1,22 @@
+[
+  {
+    "gap": "latency_25ms never tested \u2014 gap between 10ms and 50ms",
+    "status": "ready",
+    "block_reasons": []
+  },
+  {
+    "gap": "latency_200ms never tested \u2014 upper bound unknown",
+    "status": "ready",
+    "block_reasons": []
+  },
+  {
+    "gap": "TD3 never benchmarked against PPO baseline",
+    "status": "blocked",
+    "block_reasons": [
+      {
+        "issue": "Evaluation protocol must match across algorithms",
+        "fix": "Use same n_eval_episodes, deterministic=True for all algorithms"
+      }
+    ]
+  }
+]

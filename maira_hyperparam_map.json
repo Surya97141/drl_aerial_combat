@@ -1,0 +1,53 @@
+[
+  {
+    "param": "obs_type",
+    "sensitivity": "UNKNOWN",
+    "delta": 0.0,
+    "best_value": "degraded",
+    "worst_value": "unknown",
+    "values_seen": [
+      "degraded",
+      "partial_obs",
+      "full_obs"
+    ],
+    "insight": "Found 3 variant(s) of 'obs_type' but no reward data to compare. Values seen: degraded, partial_obs, full_obs"
+  },
+  {
+    "param": "ensemble",
+    "sensitivity": "UNKNOWN",
+    "delta": 0.0,
+    "best_value": "ensemble",
+    "worst_value": "unknown",
+    "values_seen": [
+      "ensemble",
+      "ensemble_3models_degraded"
+    ],
+    "insight": "Found 2 variant(s) of 'ensemble' but no reward data to compare. Values seen: ensemble, ensemble_3models_degraded"
+  },
+  {
+    "param": "algorithm",
+    "sensitivity": "UNKNOWN",
+    "delta": 0.0,
+    "best_value": "ppo",
+    "worst_value": "unknown",
+    "values_seen": [
+      "ppo",
+      "maddpg",
+      "sac"
+    ],
+    "insight": "Found 3 variant(s) of 'algorithm' but no reward data to compare. Values seen: ppo, maddpg, sac"
+  },
+  {
+    "param": "latency",
+    "sensitivity": "UNKNOWN",
+    "delta": 0.0,
+    "best_value": "100",
+    "worst_value": "unknown",
+    "values_seen": [
+      "100",
+      "10",
+      "50"
+    ],
+    "insight": "Found 3 variant(s) of 'latency' but no reward data to compare. Values seen: 100, 10, 50"
+  }
+]
