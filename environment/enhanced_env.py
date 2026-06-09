@@ -255,8 +255,13 @@ class EnhancedAerialCombatEnv(gym.Env):
         rel_pos = self.opponent_state["position"] - self.agent_state["position"]
         distance = float(np.linalg.norm(rel_pos))
 
-        # Proximity reward (encourage closing within 2 km)
-        reward += max(0.0, (2000.0 - distance) / 2000.0) * 3.0
+        # Proximity reward — only active within 1 km to force actual engagement
+        reward += max(0.0, (1000.0 - distance) / 1000.0) * 3.0
+
+        # Progressive altitude penalty: linearly scales from 0 at 200m to -5 at 0m
+        altitude = self.agent_state["position"][2]
+        if altitude < 200.0:
+            reward -= (200.0 - altitude) / 200.0 * 5.0
 
         # Heading reward (agent facing opponent)
         if distance > 1e-6:

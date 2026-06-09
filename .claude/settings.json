@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\" experiments/robustness_sweep.py)"
+    ]
+  }
+}

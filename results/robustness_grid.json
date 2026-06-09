@@ -1,0 +1,476 @@
+{
+  "baseline_s42": {
+    "variant": "baseline",
+    "seed": 42,
+    "train_config": {
+      "noise_std": 0.0,
+      "latency_steps": 0
+    },
+    "eval": {
+      "test_clean": {
+        "kill_rate": 0.85,
+        "kill_count": 17,
+        "n_episodes": 20,
+        "avg_reward": 268.68708870704677,
+        "std_reward": 29.652421092493583,
+        "avg_damage": 98.0,
+        "avg_min_dist": 272.8865432584868,
+        "outcome_counts": {
+          "kill": 17,
+          "died": 3
+        },
+        "test_condition": "clean"
+      },
+      "test_latency": {
+        "kill_rate": 0.85,
+        "kill_count": 17,
+        "n_episodes": 20,
+        "avg_reward": 268.36150201135627,
+        "std_reward": 29.645495509722732,
+        "avg_damage": 98.5,
+        "avg_min_dist": 272.82940885530445,
+        "outcome_counts": {
+          "kill": 17,
+          "died": 3
+        },
+        "test_condition": "latency"
+      },
+      "test_noise": {
+        "kill_rate": 0.8,
+        "kill_count": 16,
+        "n_episodes": 20,
+        "avg_reward": 276.02266016670774,
+        "std_reward": 36.55767618597168,
+        "avg_damage": 97.5,
+        "avg_min_dist": 257.30523620856405,
+        "outcome_counts": {
+          "kill": 16,
+          "died": 4
+        },
+        "test_condition": "noise"
+      },
+      "test_degraded": {
+        "kill_rate": 0.85,
+        "kill_count": 17,
+        "n_episodes": 20,
+        "avg_reward": 270.49203415894715,
+        "std_reward": 30.313868370989134,
+        "avg_damage": 98.25,
+        "avg_min_dist": 268.99266242537226,
+        "outcome_counts": {
+          "kill": 17,
+          "died": 3
+        },
+        "test_condition": "degraded"
+      }
+    }
+  },
+  "baseline_s123": {
+    "variant": "baseline",
+    "seed": 123,
+    "train_config": {
+      "noise_std": 0.0,
+      "latency_steps": 0
+    },
+    "eval": {
+      "test_clean": {
+        "kill_rate": 0.4,
+        "kill_count": 8,
+        "n_episodes": 20,
+        "avg_reward": 712.2312288667315,
+        "std_reward": 756.0736806787316,
+        "avg_damage": 59.25,
+        "avg_min_dist": 411.0036774647019,
+        "outcome_counts": {
+          "died": 4,
+          "kill": 8,
+          "timeout": 8
+        },
+        "test_condition": "clean"
+      },
+      "test_latency": {
+        "kill_rate": 0.5,
+        "kill_count": 10,
+        "n_episodes": 20,
+        "avg_reward": 429.4036542538829,
+        "std_reward": 462.08316018294545,
+        "avg_damage": 64.5,
+        "avg_min_dist": 317.3290803851498,
+        "outcome_counts": {
+          "died": 7,
+          "kill": 10,
+          "timeout": 3
+        },
+        "test_condition": "latency"
+      },
+      "test_noise": {
+        "kill_rate": 0.45,
+        "kill_count": 9,
+        "n_episodes": 20,
+        "avg_reward": 804.8092724804827,
+        "std_reward": 787.2911381215351,
+        "avg_damage": 58.5,
+        "avg_min_dist": 463.0074825676922,
+        "outcome_counts": {
+          "died": 1,
+          "kill": 9,
+          "timeout": 10
+        },
+        "test_condition": "noise"
+      },
+      "test_degraded": {
+        "kill_rate": 0.5,
+        "kill_count": 10,
+        "n_episodes": 20,
+        "avg_reward": 597.106531458854,
+        "std_reward": 777.1008969806467,
+        "avg_damage": 66.25,
+        "avg_min_dist": 379.46864668800083,
+        "outcome_counts": {
+          "died": 5,
+          "kill": 10,
+          "timeout": 5
+        },
+        "test_condition": "degraded"
+      }
+    }
+  },
+  "baseline_s456": {
+    "variant": "baseline",
+    "seed": 456,
+    "train_config": {
+      "noise_std": 0.0,
+      "latency_steps": 0
+    },
+    "eval": {
+      "test_clean": {
+        "kill_rate": 0.6,
+        "kill_count": 12,
+        "n_episodes": 20,
+        "avg_reward": 272.44161840485634,
+        "std_reward": 61.31003153248971,
+        "avg_damage": 65.75,
+        "avg_min_dist": 486.5084267221362,
+        "outcome_counts": {
+          "crashed": 6,
+          "kill": 12,
+          "died": 2
+        },
+        "test_condition": "clean"
+      },
+      "test_latency": {
+        "kill_rate": 0.7,
+        "kill_count": 14,
+        "n_episodes": 20,
+        "avg_reward": 244.45291514863646,
+        "std_reward": 56.20478305400247,
+        "avg_damage": 76.25,
+        "avg_min_dist": 388.8839603611136,
+        "outcome_counts": {
+          "crashed": 1,
+          "died": 5,
+          "kill": 14
+        },
+        "test_condition": "latency"
+      },
+      "test_noise": {
+        "kill_rate": 0.3,
+        "kill_count": 6,
+        "n_episodes": 20,
+        "avg_reward": 330.9019026607517,
+        "std_reward": 127.50167545425153,
+        "avg_damage": 40.75,
+        "avg_min_dist": 578.5688429910764,
+        "outcome_counts": {
+          "kill": 6,
+          "crashed": 14
+        },
+        "test_condition": "noise"
+      },
+      "test_degraded": {
+        "kill_rate": 0.75,
+        "kill_count": 15,
+        "n_episodes": 20,
+        "avg_reward": 249.38019076840402,
+        "std_reward": 46.2031427146075,
+        "avg_damage": 77.5,
+        "avg_min_dist": 418.9228652350272,
+        "outcome_counts": {
+          "kill": 15,
+          "died": 3,
+          "crashed": 2
+        },
+        "test_condition": "degraded"
+      }
+    }
+  },
+  "latency_s42": {
+    "variant": "latency",
+    "seed": 42,
+    "train_config": {
+      "noise_std": 0.0,
+      "latency_steps": 2
+    },
+    "eval": {
+      "test_clean": {
+        "kill_rate": 0.75,
+        "kill_count": 15,
+        "n_episodes": 20,
+        "avg_reward": 297.9749128153672,
+        "std_reward": 52.94955793574737,
+        "avg_damage": 91.5,
+        "avg_min_dist": 277.5196203104845,
+        "outcome_counts": {
+          "kill": 15,
+          "died": 5
+        },
+        "test_condition": "clean"
+      },
+      "test_latency": {
+        "kill_rate": 0.75,
+        "kill_count": 15,
+        "n_episodes": 20,
+        "avg_reward": 299.5471447139152,
+        "std_reward": 55.315059964894964,
+        "avg_damage": 92.5,
+        "avg_min_dist": 275.7238177080925,
+        "outcome_counts": {
+          "kill": 15,
+          "died": 5
+        },
+        "test_condition": "latency"
+      },
+      "test_noise": {
+        "kill_rate": 0.7,
+        "kill_count": 14,
+        "n_episodes": 20,
+        "avg_reward": 301.3225776004805,
+        "std_reward": 52.16380467742236,
+        "avg_damage": 91.75,
+        "avg_min_dist": 263.15456697156094,
+        "outcome_counts": {
+          "kill": 14,
+          "died": 6
+        },
+        "test_condition": "noise"
+      },
+      "test_degraded": {
+        "kill_rate": 0.7,
+        "kill_count": 14,
+        "n_episodes": 20,
+        "avg_reward": 302.9578388166606,
+        "std_reward": 54.484905440899475,
+        "avg_damage": 92.5,
+        "avg_min_dist": 261.2220864126119,
+        "outcome_counts": {
+          "kill": 14,
+          "died": 6
+        },
+        "test_condition": "degraded"
+      }
+    }
+  },
+  "latency_s123": {
+    "variant": "latency",
+    "seed": 123,
+    "train_config": {
+      "noise_std": 0.0,
+      "latency_steps": 2
+    },
+    "eval": {
+      "test_clean": {
+        "kill_rate": 0.9,
+        "kill_count": 18,
+        "n_episodes": 20,
+        "avg_reward": 272.6732973437855,
+        "std_reward": 31.225383722747278,
+        "avg_damage": 95.25,
+        "avg_min_dist": 338.9782146756927,
+        "outcome_counts": {
+          "kill": 18,
+          "died": 2
+        },
+        "test_condition": "clean"
+      },
+      "test_latency": {
+        "kill_rate": 0.9,
+        "kill_count": 18,
+        "n_episodes": 20,
+        "avg_reward": 273.14416940635766,
+        "std_reward": 31.544225577146026,
+        "avg_damage": 95.5,
+        "avg_min_dist": 335.0071699684298,
+        "outcome_counts": {
+          "kill": 18,
+          "died": 2
+        },
+        "test_condition": "latency"
+      },
+      "test_noise": {
+        "kill_rate": 0.9,
+        "kill_count": 18,
+        "n_episodes": 20,
+        "avg_reward": 272.91782267879375,
+        "std_reward": 31.43354618619683,
+        "avg_damage": 95.0,
+        "avg_min_dist": 337.6011220885588,
+        "outcome_counts": {
+          "kill": 18,
+          "died": 2
+        },
+        "test_condition": "noise"
+      },
+      "test_degraded": {
+        "kill_rate": 0.9,
+        "kill_count": 18,
+        "n_episodes": 20,
+        "avg_reward": 273.24026749878874,
+        "std_reward": 30.3580663891452,
+        "avg_damage": 95.5,
+        "avg_min_dist": 334.5064565907166,
+        "outcome_counts": {
+          "kill": 18,
+          "died": 2
+        },
+        "test_condition": "degraded"
+      }
+    }
+  },
+  "latency_s456": {
+    "variant": "latency",
+    "seed": 456,
+    "train_config": {
+      "noise_std": 0.0,
+      "latency_steps": 2
+    },
+    "eval": {
+      "test_clean": {
+        "kill_rate": 1.0,
+        "kill_count": 20,
+        "n_episodes": 20,
+        "avg_reward": 306.47641186206897,
+        "std_reward": 29.177767971308022,
+        "avg_damage": 100.0,
+        "avg_min_dist": 458.86241199330925,
+        "outcome_counts": {
+          "kill": 20
+        },
+        "test_condition": "clean"
+      },
+      "test_latency": {
+        "kill_rate": 1.0,
+        "kill_count": 20,
+        "n_episodes": 20,
+        "avg_reward": 304.2169869701919,
+        "std_reward": 30.060868718580217,
+        "avg_damage": 100.0,
+        "avg_min_dist": 441.17379506284715,
+        "outcome_counts": {
+          "kill": 20
+        },
+        "test_condition": "latency"
+      },
+      "test_noise": {
+        "kill_rate": 0.9,
+        "kill_count": 18,
+        "n_episodes": 20,
+        "avg_reward": 368.94518386836324,
+        "std_reward": 240.12163534394946,
+        "avg_damage": 90.0,
+        "avg_min_dist": 445.2572389676385,
+        "outcome_counts": {
+          "died": 2,
+          "kill": 18
+        },
+        "test_condition": "noise"
+      },
+      "test_degraded": {
+        "kill_rate": 1.0,
+        "kill_count": 20,
+        "n_episodes": 20,
+        "avg_reward": 306.1263341143291,
+        "std_reward": 29.16212210779606,
+        "avg_damage": 100.0,
+        "avg_min_dist": 453.15410106807786,
+        "outcome_counts": {
+          "kill": 20
+        },
+        "test_condition": "degraded"
+      }
+    }
+  },
+  "noise_s42": {
+    "variant": "noise",
+    "seed": 42,
+    "train_config": {
+      "noise_std": 8.0,
+      "latency_steps": 0
+    },
+    "eval": {
+      "test_clean": {
+        "kill_rate": 0.55,
+        "kill_count": 11,
+        "n_episodes": 20,
+        "avg_reward": 483.01878762487274,
+        "std_reward": 345.475476759291,
+        "avg_damage": 62.75,
+        "avg_min_dist": 478.3260751260994,
+        "outcome_counts": {
+          "crashed": 3,
+          "kill": 11,
+          "timeout": 5,
+          "died": 1
+        },
+        "test_condition": "clean"
+      },
+      "test_latency": {
+        "kill_rate": 0.5,
+        "kill_count": 10,
+        "n_episodes": 20,
+        "avg_reward": 483.5985628851827,
+        "std_reward": 511.45378712897724,
+        "avg_damage": 65.75,
+        "avg_min_dist": 411.77573143756536,
+        "outcome_counts": {
+          "kill": 10,
+          "crashed": 3,
+          "died": 3,
+          "timeout": 4
+        },
+        "test_condition": "latency"
+      },
+      "test_noise": {
+        "kill_rate": 0.45,
+        "kill_count": 9,
+        "n_episodes": 20,
+        "avg_reward": 396.43336892732066,
+        "std_reward": 257.63731042593685,
+        "avg_damage": 52.25,
+        "avg_min_dist": 499.32814876545973,
+        "outcome_counts": {
+          "crashed": 5,
+          "kill": 9,
+          "died": 2,
+          "timeout": 4
+        },
+        "test_condition": "noise"
+      },
+      "test_degraded": {
+        "kill_rate": 0.6,
+        "kill_count": 12,
+        "n_episodes": 20,
+        "avg_reward": 440.5505637627063,
+        "std_reward": 544.1447378666962,
+        "avg_damage": 79.75,
+        "avg_min_dist": 377.99315466808065,
+        "outcome_counts": {
+          "kill": 12,
+          "crashed": 3,
+          "died": 3,
+          "timeout": 2
+        },
+        "test_condition": "degraded"
+      }
+    }
+  }
+}
