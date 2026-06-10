@@ -1,11 +1,11 @@
 """
 TacPM -- Reward Shaper
 Automated reward function improvement loop:
-  analysis.json  -->  Gemini  -->  suggested Python reward diff  -->  saved patch
+  analysis.json  -->  EDT or Gemini  -->  suggested Python reward diff  -->  saved patch
 
-This is the core of the Option-1 novelty contribution:
-  "LLM-guided reward shaping from episode failure analysis,
-   with no human intervention between diagnosis and code suggestion."
+Two backends (pass use_edt=True/False or --edt / --gemini CLI flag):
+  EDT    (default) : local Episode Diagnostic Transformer, zero API cost, <1 s
+  Gemini           : Google Gemini 1.5 Flash, requires GEMINI_API_KEY env var
 """
 
 import json
@@ -164,19 +164,77 @@ def parse_response(text: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# EDT backend — local, zero-cost
+# ---------------------------------------------------------------------------
+
+def run_edt_shaping(analyses: list) -> dict:
+    """Run EDT over replays that match the analysis, return parsed patch dict."""
+    sys.path.insert(0, str(project_root / "tacpm"))
+    from edt_diagnose import load_model, diagnose_episode, FIX_ADVICE
+    from edt_model import FIX_TYPES
+
+    replays_path = project_root / "data" / "replays.json"
+    if not replays_path.exists():
+        raise FileNotFoundError(
+            f"replays.json not found at {replays_path}. "
+            "Run tacpm/replay_generator.py first."
+        )
+    with open(replays_path) as f:
+        replays = json.load(f)
+
+    model   = load_model()
+    ep_diags = []
+    for ep in replays:
+        d = diagnose_episode(model, ep)
+        ep_diags.append(d)
+
+    # Aggregate: most-voted fix
+    from collections import Counter
+    fix_votes = Counter(d["predicted_fix"] for d in ep_diags)
+    top_fix   = fix_votes.most_common(1)[0][0]
+    top_fail  = Counter(d["predicted_failure"] for d in ep_diags).most_common(1)[0][0]
+    advice, code = FIX_ADVICE[top_fix]
+
+    print("=" * 60)
+    print("  TacPM REWARD SHAPING (EDT backend)")
+    print("=" * 60)
+    print(f"\nDOMINANT FAILURE : {top_fail}")
+    print(f"RECOMMENDED FIX  : {top_fix}")
+    print(f"\nDIAGNOSIS:\n  {advice}")
+    if code:
+        print(f"\nCODE SNIPPET:\n  {code}")
+    print(f"\nFix vote breakdown:")
+    for fix, cnt in fix_votes.most_common():
+        print(f"  {cnt}x  {fix}")
+
+    return {
+        "backend":          "EDT",
+        "dominant_failure": top_fail,
+        "diagnosis":        advice,
+        "code":             code or "",
+        "rationale":        f"EDT voted {top_fix} ({fix_votes[top_fix]}/{len(ep_diags)} episodes)",
+        "prediction":       "Retrain to observe impact",
+        "edt_votes":        dict(fix_votes),
+        "raw":              json.dumps(ep_diags, indent=2),
+    }
+
+
+# ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
 
 def run_reward_shaping(
     analysis_path: str = None,
-    dry_run: bool = False,
+    dry_run:       bool = False,
+    use_edt:       bool = True,
 ) -> dict:
     """
-    Full pipeline: read analysis -> build prompt -> call LLM -> parse -> save.
+    Full pipeline: read analysis -> EDT or Gemini diagnosis -> save patch.
 
     Args:
-        analysis_path: Path to analysis.json. Defaults to data/analysis.json.
-        dry_run: If True, skip the LLM call and return the prompt only (for testing).
+        analysis_path : Path to analysis.json. Defaults to data/analysis.json.
+        dry_run       : If True, skip the backend call (Gemini path only).
+        use_edt       : True = EDT backend (default), False = Gemini backend.
     """
     if analysis_path is None:
         analysis_path = str(project_root / "data" / "analysis.json")
@@ -184,37 +242,42 @@ def run_reward_shaping(
     with open(analysis_path, "r") as f:
         analyses = json.load(f)
 
-    reward_source = _load_reward_source()
-    prompt = build_shaping_prompt(analyses, reward_source)
+    # --- EDT path ---
+    if use_edt:
+        parsed = run_edt_shaping(analyses)
 
-    if dry_run:
-        print("=== DRY RUN: prompt only ===")
-        print(prompt)
-        return {"prompt": prompt}
+    # --- Gemini path ---
+    else:
+        reward_source = _load_reward_source()
+        prompt        = build_shaping_prompt(analyses, reward_source)
 
-    print("Sending failure analysis to Gemini for reward shaping suggestions...\n")
-    raw_response = call_gemini(prompt)
-    parsed = parse_response(raw_response)
+        if dry_run:
+            print("=== DRY RUN: prompt only ===")
+            print(prompt)
+            return {"prompt": prompt}
 
-    # Pretty print
-    print("=" * 60)
-    print("  TacPM REWARD SHAPING SUGGESTION")
-    print("=" * 60)
-    print(f"\nDIAGNOSIS:\n{parsed['diagnosis']}")
-    print(f"\nCODE CHANGE:\n{parsed['code']}")
-    print(f"\nRATIONALE:\n{parsed['rationale']}")
-    print(f"\nPREDICTED KILL RATE CHANGE:\n{parsed['prediction']}")
+        print("Sending failure analysis to Gemini for reward shaping suggestions...\n")
+        raw_response = call_gemini(prompt)
+        parsed = parse_response(raw_response)
+        parsed["backend"] = "Gemini"
 
-    # Save patch file alongside analysis
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    out_dir = Path(analysis_path).parent
+        print("=" * 60)
+        print("  TacPM REWARD SHAPING SUGGESTION (Gemini backend)")
+        print("=" * 60)
+        print(f"\nDIAGNOSIS:\n{parsed['diagnosis']}")
+        print(f"\nCODE CHANGE:\n{parsed['code']}")
+        print(f"\nRATIONALE:\n{parsed['rationale']}")
+        print(f"\nPREDICTED KILL RATE CHANGE:\n{parsed['prediction']}")
+
+    # Save patch
+    timestamp  = datetime.now().strftime("%Y%m%d_%H%M%S")
+    out_dir    = Path(analysis_path).parent
     patch_path = out_dir / f"reward_patch_{timestamp}.json"
 
     result = {
-        "timestamp":       timestamp,
-        "analysis_path":   analysis_path,
+        "timestamp":        timestamp,
+        "analysis_path":    analysis_path,
         "kill_rate_before": sum(1 for a in analyses if a.get("kill", False)) / len(analyses),
-        "dominant_failure": analyses[0]["failure_mode"] if analyses else "unknown",
         **parsed,
     }
 
@@ -230,5 +293,6 @@ def run_reward_shaping(
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    dry = "--dry-run" in sys.argv
-    run_reward_shaping(dry_run=dry)
+    dry    = "--dry-run" in sys.argv
+    gemini = "--gemini"  in sys.argv   # default is EDT
+    run_reward_shaping(dry_run=dry, use_edt=not gemini)

@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(\"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\" experiments/robustness_sweep.py)"
+      "Bash(\"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\" experiments/robustness_sweep.py)",
+      "Bash(\"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\" tacpm/generate_edt_data.py --episodes 20)",
+      "Bash(\"C:\\\\Users\\\\hp\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\" tacpm/train_edt.py --epochs 150)"
     ]
   }
 }
