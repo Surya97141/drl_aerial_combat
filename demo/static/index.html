@@ -3,109 +3,325 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Aerial Combat AI — Live Demo</title>
+<title>Aerial Combat AI — Research Demo</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
+/* ===== RESET & LAYOUT ===== */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:100%; overflow:hidden;
+             background:#000; font-family:'Courier New',monospace; }
 
-  #renderCanvas { width: 100vw; height: 100vh; display: block; }
+body { display:flex; }
 
-  /* HUD canvas sits on top of the 3D canvas */
-  #hudCanvas {
-    position: fixed; top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    pointer-events: none; z-index: 10;
-  }
+/* ===== LEFT SIDEBAR ===== */
+#sidebar {
+  width: 290px;
+  min-width: 290px;
+  height: 100vh;
+  background: #020b02;
+  border-right: 1px solid #0a280a;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  scrollbar-width: thin;
+  scrollbar-color: #0f3 #010801;
+}
+#sidebar::-webkit-scrollbar { width:4px; }
+#sidebar::-webkit-scrollbar-track { background:#010801; }
+#sidebar::-webkit-scrollbar-thumb { background:#0f3; border-radius:2px; }
 
-  /* Mode selector */
-  #modePanel {
-    position: fixed; top: 20px; left: 50%;
-    transform: translateX(-50%);
-    display: flex; gap: 8px; z-index: 20;
-  }
-  .modeBtn {
-    padding: 10px 22px;
-    background: rgba(0,30,0,0.85);
-    border: 1px solid #0f0; color: #0f0;
-    font-family: 'Courier New', monospace;
-    font-size: 13px; font-weight: bold;
-    cursor: pointer; letter-spacing: 1px;
-    text-transform: uppercase;
-    transition: all 0.2s;
-  }
-  .modeBtn:hover  { background: rgba(0,80,0,0.9); }
-  .modeBtn.active { background: #0a3d0a; border-color: #0f0; box-shadow: 0 0 12px #0f04; }
+/* Sidebar header */
+.sb-header {
+  background: linear-gradient(135deg, #001a00, #003300);
+  border-bottom: 2px solid #0f0;
+  padding: 14px 14px 10px;
+}
+.sb-logo {
+  font-size:13px; font-weight:bold; color:#0f0;
+  letter-spacing:2px; text-transform:uppercase;
+}
+.sb-subtitle { font-size:10px; color:#0a0; margin-top:2px; letter-spacing:1px; }
+.sb-status-row { display:flex; justify-content:space-between; margin-top:10px; align-items:center; }
+.sb-badge {
+  font-size:10px; font-weight:bold; letter-spacing:1.5px;
+  padding:3px 8px; border-radius:2px; text-transform:uppercase;
+}
+.badge-live   { background:#001a00; border:1px solid #0f0; color:#0f0; }
+.badge-mode   { background:#003300; border:1px solid #0d0; color:#0d0; }
+.badge-warn   { background:#1a0e00; border:1px solid #fa0; color:#fa0; }
 
-  /* EDT diagnosis panel */
-  #edtPanel {
-    position: fixed; bottom: 20px; left: 20px;
-    width: 340px; background: rgba(0,10,0,0.9);
-    border: 1px solid #0f0; color: #0f0;
-    padding: 14px; z-index: 20;
-    font-size: 12px; line-height: 1.7;
-    display: none;
-    animation: slideIn 0.4s ease;
-  }
-  @keyframes slideIn {
-    from { transform: translateX(-360px); opacity: 0; }
-    to   { transform: translateX(0);      opacity: 1; }
-  }
-  #edtPanel h3 { color: #0ff; font-size: 11px; letter-spacing: 2px; margin-bottom: 8px; }
-  .edt-row { display: flex; justify-content: space-between; border-bottom: 1px solid #030; padding: 3px 0; }
-  .edt-label { color: #888; }
-  .edt-value { color: #0f0; font-weight: bold; }
-  .edt-code  { margin-top: 10px; background: #001500; padding: 8px; color: #0ff; font-size: 11px; border-left: 2px solid #0f0; }
+/* Panel section */
+.sb-section {
+  border-bottom: 1px solid #0a1a0a;
+  padding: 10px 14px;
+}
+.sb-section-title {
+  font-size:9px; font-weight:bold; color:#0a0;
+  letter-spacing:2.5px; text-transform:uppercase;
+  margin-bottom:8px; display:flex; align-items:center; gap:6px;
+}
+.sb-section-title::before { content:'◈'; color:#0f0; }
 
-  /* Controls hint */
-  #controls {
-    position: fixed; bottom: 20px; right: 20px;
-    background: rgba(0,10,0,0.85);
-    border: 1px solid #0f04; color: #0f08;
-    padding: 12px 16px; font-size: 11px;
-    line-height: 1.9; z-index: 20;
-    letter-spacing: 0.5px;
-  }
-  #controls b { color: #0f0; }
+/* Stat row */
+.sb-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:3px 0; border-bottom:1px solid #051005;
+}
+.sb-row:last-child { border-bottom:none; }
+.sb-label  { font-size:10px; color:#0a6020; letter-spacing:0.5px; }
+.sb-value  { font-size:11px; color:#00ee00; font-weight:bold; }
+.sb-value.warn  { color:#ffaa00; }
+.sb-value.danger{ color:#ff3333; }
+.sb-value.good  { color:#00ff88; }
+.sb-value.dim   { color:#0a5010; }
 
-  /* Kill/death flash */
-  #flash {
-    position: fixed; top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    pointer-events: none; z-index: 30;
-    opacity: 0; transition: opacity 0.3s;
-  }
+/* Health bars */
+.health-row { margin:5px 0; }
+.health-label-row { display:flex; justify-content:space-between; margin-bottom:3px; }
+.health-name  { font-size:10px; color:#0a6020; }
+.health-pct   { font-size:10px; font-weight:bold; }
+.health-track { height:12px; background:#010d01; border:1px solid #0a3a0a; border-radius:1px; }
+.health-fill  { height:100%; border-radius:1px; transition:width 0.15s ease; }
+.health-agent { background:linear-gradient(90deg,#004d00,#00cc00); }
+.health-opp   { background:linear-gradient(90deg,#4d0000,#cc0000); }
+
+/* EDT diagnosis */
+.edt-block {
+  background:#010d01;
+  border:1px solid #0a3a0a;
+  border-radius:2px;
+  padding:8px;
+  margin-top:4px;
+}
+.edt-row { display:flex; justify-content:space-between; padding:2px 0; }
+.edt-key   { font-size:9px; color:#0a5020; }
+.edt-val   { font-size:9px; color:#00dd00; font-weight:bold; text-align:right; max-width:140px; }
+.edt-code  {
+  margin-top:8px;
+  background:#000d00;
+  border-left:2px solid #0f0;
+  padding:6px;
+  font-size:9px;
+  color:#0099aa;
+  line-height:1.5;
+  white-space:pre;
+  overflow-x:auto;
+}
+.edt-pending { font-size:9px; color:#0a4015; font-style:italic; padding:4px 0; }
+
+/* Research contributions */
+.contrib-item {
+  font-size:9px; color:#0a5020;
+  padding:3px 0; display:flex; gap:6px; align-items:baseline;
+}
+.contrib-item span { color:#00bb44; font-weight:bold; }
+
+/* Inline conf bar */
+.conf-bar-track { flex:1; height:6px; background:#010d01; border:1px solid #0a3a0a; margin-left:8px; }
+.conf-bar-fill  { height:100%; background:linear-gradient(90deg,#004d20,#00cc44); }
+
+/* ===== CANVAS AREA ===== */
+#canvasWrap {
+  flex:1;
+  position:relative;
+  height:100vh;
+}
+#renderCanvas {
+  width:100%;
+  height:100%;
+  display:block;
+  outline:none;
+}
+#hudCanvas {
+  position:absolute;
+  top:0; left:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  z-index:5;
+}
+
+/* Mode buttons */
+#modeSwitcher {
+  position:absolute;
+  top:14px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  gap:6px;
+  z-index:10;
+}
+.modeBtn {
+  padding:9px 18px;
+  background:rgba(0,20,0,0.88);
+  border:1px solid #0a3a0a;
+  color:#0a7020;
+  font:bold 11px 'Courier New',monospace;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:all 0.15s;
+}
+.modeBtn:hover  { border-color:#0f0; color:#0f0; background:rgba(0,40,0,0.9); }
+.modeBtn.active { background:rgba(0,50,0,0.95); border-color:#0f0; color:#0f0;
+                  box-shadow:0 0 10px rgba(0,255,0,0.2); }
+.modeBtn.warn.active { border-color:#fa0; color:#fa0; box-shadow:0 0 10px rgba(255,170,0,0.25); }
+
+/* Controls hint */
+#ctrlHint {
+  position:absolute;
+  bottom:16px; right:14px;
+  background:rgba(0,10,0,0.82);
+  border:1px solid #0a2a0a;
+  color:#0a5020;
+  padding:10px 14px;
+  font-size:10px;
+  line-height:1.9;
+  z-index:10;
+}
+#ctrlHint b { color:#0a8040; }
+
+/* Screen flash */
+#flash {
+  position:absolute; top:0; left:0; right:0; bottom:0;
+  pointer-events:none; z-index:15;
+  opacity:0; transition:opacity 0.3s;
+}
 </style>
 </head>
 <body>
 
-<canvas id="renderCanvas"></canvas>
-<canvas id="hudCanvas"></canvas>
+<!-- ==================== SIDEBAR ==================== -->
+<div id="sidebar">
 
-<div id="modePanel">
-  <button class="modeBtn active" onclick="setMode('manual')" id="btn-manual">✈ FLY MANUAL</button>
-  <button class="modeBtn"        onclick="setMode('ai')"     id="btn-ai">⚡ AI PILOT</button>
-  <button class="modeBtn"        onclick="setMode('degraded')" id="btn-degraded">⚠ DEGRADED AI</button>
+  <!-- Header -->
+  <div class="sb-header">
+    <div class="sb-logo">Aerial Combat AI</div>
+    <div class="sb-subtitle">DRL Research Demo  ·  GBM Aviation</div>
+    <div class="sb-status-row">
+      <span class="sb-badge badge-live" id="sb-conn">● CONNECTING</span>
+      <span class="sb-badge badge-mode" id="sb-mode-badge">MANUAL</span>
+    </div>
+  </div>
+
+  <!-- Mission Status -->
+  <div class="sb-section">
+    <div class="sb-section-title">Mission Status</div>
+    <div class="sb-row"><span class="sb-label">Episode</span><span class="sb-value" id="sb-ep">—</span></div>
+    <div class="sb-row"><span class="sb-label">Step</span><span class="sb-value" id="sb-step">—</span></div>
+    <div class="sb-row"><span class="sb-label">Max Steps</span><span class="sb-value dim">1 000</span></div>
+    <div class="sb-row"><span class="sb-label">Outcome</span><span class="sb-value" id="sb-outcome">IN PROGRESS</span></div>
+    <div class="sb-row"><span class="sb-label">Mode</span><span class="sb-value" id="sb-mode-row">MANUAL CTRL</span></div>
+  </div>
+
+  <!-- Live Telemetry -->
+  <div class="sb-section">
+    <div class="sb-section-title">Live Telemetry</div>
+    <div class="sb-row"><span class="sb-label">Speed</span><span class="sb-value" id="sb-spd">—</span></div>
+    <div class="sb-row"><span class="sb-label">Altitude</span><span class="sb-value" id="sb-alt">—</span></div>
+    <div class="sb-row"><span class="sb-label">Heading</span><span class="sb-value" id="sb-hdg">—</span></div>
+    <div class="sb-row"><span class="sb-label">Distance to Target</span><span class="sb-value" id="sb-dist">—</span></div>
+    <div class="sb-row"><span class="sb-label">Weapon Range</span><span class="sb-value" id="sb-range">—</span></div>
+    <div class="sb-row"><span class="sb-label">Ep. Reward</span><span class="sb-value" id="sb-reward">0.00</span></div>
+  </div>
+
+  <!-- Health Status -->
+  <div class="sb-section">
+    <div class="sb-section-title">Health Status</div>
+    <div class="health-row">
+      <div class="health-label-row">
+        <span class="health-name">AGENT (Blue)</span>
+        <span class="health-pct" id="hp-agent-pct" style="color:#00cc00">100%</span>
+      </div>
+      <div class="health-track"><div class="health-fill health-agent" id="hp-agent-bar" style="width:100%"></div></div>
+    </div>
+    <div class="health-row" style="margin-top:8px">
+      <div class="health-label-row">
+        <span class="health-name">BANDIT (Red)</span>
+        <span class="health-pct" id="hp-opp-pct" style="color:#cc0000">100%</span>
+      </div>
+      <div class="health-track"><div class="health-fill health-opp" id="hp-opp-bar" style="width:100%"></div></div>
+    </div>
+  </div>
+
+  <!-- Combat Scores -->
+  <div class="sb-section">
+    <div class="sb-section-title">Combat Scores</div>
+    <div class="sb-row"><span class="sb-label">Kills</span><span class="sb-value good" id="sb-kills">0</span></div>
+    <div class="sb-row"><span class="sb-label">Deaths</span><span class="sb-value danger" id="sb-deaths">0</span></div>
+    <div class="sb-row"><span class="sb-label">K / D Ratio</span><span class="sb-value" id="sb-kd">—</span></div>
+    <div class="sb-row"><span class="sb-label">Damage Dealt</span><span class="sb-value" id="sb-dmg">—</span></div>
+  </div>
+
+  <!-- EDT Diagnosis -->
+  <div class="sb-section">
+    <div class="sb-section-title">EDT Diagnosis</div>
+    <div id="edt-pending" class="edt-pending">Awaiting episode completion…</div>
+    <div id="edt-content" style="display:none">
+      <div class="edt-block">
+        <div class="edt-row"><span class="edt-key">FAILURE MODE</span><span class="edt-val" id="edt-fail">—</span></div>
+        <div class="edt-row"><span class="edt-key">RECOMMENDED FIX</span><span class="edt-val" id="edt-fix">—</span></div>
+        <div class="edt-row" style="align-items:center">
+          <span class="edt-key">CONFIDENCE</span>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span class="edt-val" id="edt-conf">—</span>
+            <div class="conf-bar-track"><div class="conf-bar-fill" id="edt-conf-bar" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div class="edt-row"><span class="edt-key">CRITICAL STEPS</span><span class="edt-val" id="edt-steps">—</span></div>
+      </div>
+      <div class="edt-code" id="edt-advice">—</div>
+    </div>
+  </div>
+
+  <!-- Model Info -->
+  <div class="sb-section">
+    <div class="sb-section-title">Model Info</div>
+    <div class="sb-row"><span class="sb-label">PPO Algorithm</span><span class="sb-value dim">Stable-Baselines3</span></div>
+    <div class="sb-row"><span class="sb-label">Obs Space</span><span class="sb-value dim">14-dim cont.</span></div>
+    <div class="sb-row"><span class="sb-label">Action Space</span><span class="sb-value dim">4-dim cont.</span></div>
+    <div class="sb-row"><span class="sb-label">EDT Val Acc.</span><span class="sb-value good">72%</span></div>
+    <div class="sb-row"><span class="sb-label">Robustness Score</span><span class="sb-value" id="sb-robust">Loading…</span></div>
+    <div class="sb-row"><span class="sb-label">EDT Classes</span><span class="sb-value dim">6 failure / 6 fix</span></div>
+  </div>
+
+  <!-- Research Contributions -->
+  <div class="sb-section">
+    <div class="sb-section-title">Research Contributions</div>
+    <div class="contrib-item"><span>✓</span>Episode Diagnostic Transformer (EDT)</div>
+    <div class="contrib-item"><span>✓</span>Generational Self-Play (5 gens)</div>
+    <div class="contrib-item"><span>✓</span>Auto Reward Engineering Loop</div>
+    <div class="contrib-item"><span>✓</span>4×4 Robustness Grid (48 cells)</div>
+    <div class="contrib-item"><span>✓</span>Centred Attention Failure Localisation</div>
+    <div class="contrib-item"><span>✓</span>Active Learning EDT Buffer</div>
+  </div>
+
+</div><!-- end sidebar -->
+
+<!-- ==================== 3D CANVAS ==================== -->
+<div id="canvasWrap">
+  <canvas id="renderCanvas" tabindex="0"></canvas>
+  <canvas id="hudCanvas"></canvas>
+
+  <div id="modeSwitcher">
+    <button class="modeBtn active" id="btn-manual" onclick="setMode('manual')">✈ Manual</button>
+    <button class="modeBtn"        id="btn-ai"     onclick="setMode('ai')">⚡ AI Pilot</button>
+    <button class="modeBtn warn"   id="btn-degraded" onclick="setMode('degraded')">⚠ Degraded</button>
+  </div>
+
+  <div id="ctrlHint">
+    <b>CONTROLS</b><br>
+    W / S &nbsp;&nbsp; Throttle ±<br>
+    ↑ / ↓ &nbsp;&nbsp; Pitch<br>
+    A / D &nbsp;&nbsp; Yaw<br>
+    Q / E &nbsp;&nbsp; Roll<br>
+    R &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Reset
+  </div>
+
+  <div id="flash"></div>
 </div>
-
-<div id="edtPanel">
-  <h3>◈ EDT EPISODE DIAGNOSIS</h3>
-  <div class="edt-row"><span class="edt-label">FAILURE MODE</span><span class="edt-value" id="edt-failure">—</span></div>
-  <div class="edt-row"><span class="edt-label">RECOMMENDED FIX</span><span class="edt-value" id="edt-fix">—</span></div>
-  <div class="edt-row"><span class="edt-label">CONFIDENCE</span><span class="edt-value" id="edt-conf">—</span></div>
-  <div class="edt-row"><span class="edt-label">CRITICAL STEPS</span><span class="edt-value" id="edt-steps">—</span></div>
-  <div class="edt-code" id="edt-advice">—</div>
-</div>
-
-<div id="controls" id="controls-hint">
-  <b>CONTROLS</b><br>
-  W / S &nbsp;&nbsp;&nbsp; Throttle ±<br>
-  ↑ / ↓ &nbsp;&nbsp;&nbsp; Pitch<br>
-  A / D &nbsp;&nbsp;&nbsp; Yaw<br>
-  Q / E &nbsp;&nbsp;&nbsp; Roll<br>
-  R &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Reset
-</div>
-
-<div id="flash"></div>
 
 <!-- Babylon.js CDN -->
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
@@ -113,47 +329,78 @@
 <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
 
 <script>
-// ============================================================
-// SCENE SETUP
-// ============================================================
-
-const canvas  = document.getElementById('renderCanvas');
-const engine  = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true });
-const scene   = new BABYLON.Scene(engine);
-scene.clearColor = new BABYLON.Color4(0.02, 0.04, 0.08, 1);
-
-// Camera — follow agent from behind
-const camera = new BABYLON.FollowCamera("cam", new BABYLON.Vector3(0, 5, -20), scene);
-camera.radius        = 22;
-camera.heightOffset  = 6;
-camera.rotationOffset = 180;
-camera.cameraAcceleration = 0.06;
-camera.maxCameraSpeed     = 30;
-
-// Lighting
-const sun = new BABYLON.DirectionalLight("sun", new BABYLON.Vector3(-1, -2, -1), scene);
-sun.intensity = 1.4;
-sun.diffuse   = new BABYLON.Color3(1, 0.95, 0.85);
-
-const ambient = new BABYLON.HemisphericLight("amb", new BABYLON.Vector3(0, 1, 0), scene);
-ambient.intensity = 0.4;
-ambient.diffuse   = new BABYLON.Color3(0.4, 0.6, 1.0);
+'use strict';
 
 // ============================================================
-// SKY
+// ENGINE + SCENE
 // ============================================================
 
-const skyMat  = new BABYLON.SkyMaterial("sky", scene);
-skyMat.backFaceCulling = false;
-skyMat.inclination     = 0.0;
-skyMat.azimuth         = 0.25;
-skyMat.luminance       = 0.9;
-skyMat.turbidity       = 8;
-skyMat.rayleigh        = 2;
-skyMat.mieCoefficient  = 0.005;
-skyMat.mieDirectionalG = 0.98;
-const skybox = BABYLON.MeshBuilder.CreateBox("sky", { size: 5000 }, scene);
-skybox.material = skyMat;
+const canvas = document.getElementById('renderCanvas');
+const engine = new BABYLON.Engine(canvas, true, {
+  preserveDrawingBuffer: true,
+  stencil: true,
+  antialias: true,
+});
+const scene = new BABYLON.Scene(engine);
+scene.clearColor = new BABYLON.Color4(0.05, 0.08, 0.14, 1);
+scene.gravity     = new BABYLON.Vector3(0, 0, 0);
+
+// Follow camera
+const camera = new BABYLON.FollowCamera("cam", new BABYLON.Vector3(0, 8, -25), scene);
+camera.radius              = 26;
+camera.heightOffset        = 7;
+camera.rotationOffset      = 180;
+camera.cameraAcceleration  = 0.05;
+camera.maxCameraSpeed      = 40;
+
+// ============================================================
+// LIGHTING
+// ============================================================
+
+const sun = new BABYLON.DirectionalLight("sun",
+  new BABYLON.Vector3(-0.6, -1.0, -0.4), scene);
+sun.intensity = 1.6;
+sun.diffuse   = new BABYLON.Color3(1.0, 0.93, 0.78);
+sun.position  = new BABYLON.Vector3(300, 800, 300);
+
+const sky_amb = new BABYLON.HemisphericLight("sky_amb",
+  new BABYLON.Vector3(0, 1, 0), scene);
+sky_amb.intensity   = 0.45;
+sky_amb.diffuse     = new BABYLON.Color3(0.45, 0.6, 1.0);
+sky_amb.groundColor = new BABYLON.Color3(0.2, 0.3, 0.1);
+
+// Shadow generator
+const shadows = new BABYLON.ShadowGenerator(2048, sun);
+shadows.useBlurExponentialShadowMap = true;
+shadows.blurKernel = 16;
+
+// ============================================================
+// ATMOSPHERE
+// ============================================================
+
+// Sky box via SkyMaterial
+let skybox;
+try {
+  const skyMat = new BABYLON.SkyMaterial("sky", scene);
+  skyMat.backFaceCulling  = false;
+  skyMat.inclination      = 0.0;
+  skyMat.azimuth          = 0.3;
+  skyMat.luminance        = 1.0;
+  skyMat.turbidity        = 7;
+  skyMat.rayleigh         = 2.5;
+  skyMat.mieCoefficient   = 0.005;
+  skyMat.mieDirectionalG  = 0.98;
+  skybox = BABYLON.MeshBuilder.CreateBox("sky", { size: 6000 }, scene);
+  skybox.material = skyMat;
+  skybox.infiniteDistance = true;
+} catch(e) {
+  scene.clearColor = new BABYLON.Color4(0.3, 0.5, 0.8, 1);
+}
+
+// Exponential fog
+scene.fogMode    = BABYLON.Scene.FOGMODE_EXP2;
+scene.fogDensity = 0.00006;
+scene.fogColor   = new BABYLON.Color3(0.48, 0.58, 0.75);
 
 // ============================================================
 // TERRAIN
@@ -161,175 +408,294 @@ skybox.material = skyMat;
 
 const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap(
   "terrain", "/static/assets/heightmap.png",
-  { width: 8000, height: 8000, subdivisions: 80, minHeight: 0, maxHeight: 200 },
+  { width: 8000, height: 8000, subdivisions: 120,
+    minHeight: 0, maxHeight: 250 },
   scene
 );
-const groundMat = new BABYLON.StandardMaterial("gnd", scene);
-groundMat.diffuseColor  = new BABYLON.Color3(0.18, 0.28, 0.12);
-groundMat.specularColor = new BABYLON.Color3(0.05, 0.05, 0.05);
-ground.material = groundMat;
+
+const gndMat = new BABYLON.PBRMaterial("gnd", scene);
+// Diffuse grass texture
+const gTex = new BABYLON.Texture(
+  "https://assets.babylonjs.com/textures/grass.png", scene);
+gTex.uScale = 80; gTex.vScale = 80;
+gndMat.albedoTexture = gTex;
+
+// Normal map for surface depth
+const gNorm = new BABYLON.Texture(
+  "https://assets.babylonjs.com/textures/grassn.png", scene);
+gNorm.uScale = 80; gNorm.vScale = 80;
+gndMat.bumpTexture = gNorm;
+
+gndMat.metallic  = 0.0;
+gndMat.roughness = 0.92;
+gndMat.useRoughnessFromMetallicTextureAlpha = false;
+ground.material = gndMat;
+ground.receiveShadows = true;
 
 // ============================================================
-// AIRCRAFT MESHES
+// AIRCRAFT  — try GLB → fallback procedural
 // ============================================================
 
-function buildAircraftMesh(name, color) {
-  const root = new BABYLON.TransformNode(name, scene);
+let agentRoot  = null;
+let oppRoot    = null;
+let modelsReady = false;
 
-  // Fuselage
-  const body = BABYLON.MeshBuilder.CreateCylinder(name + "_body",
-    { height: 4, diameterTop: 0.3, diameterBottom: 0.6, tessellation: 8 }, scene);
-  body.rotation.z = Math.PI / 2;
-  body.parent = root;
+// Improved procedural jet (used as fallback)
+function buildJet(name, albedo) {
+  const root = new BABYLON.TransformNode(name + "_root", scene);
 
-  // Wings
-  const wingL = BABYLON.MeshBuilder.CreateBox(name + "_wL",
-    { width: 4.5, height: 0.15, depth: 1.4 }, scene);
-  wingL.position = new BABYLON.Vector3(0, 0, 0.2);
-  wingL.parent = root;
+  const mat = new BABYLON.PBRMaterial(name + "_pbr", scene);
+  mat.albedoColor = albedo;
+  mat.metallic    = 0.88;
+  mat.roughness   = 0.18;
+  mat.emissiveColor = albedo.scale(0.04);
 
-  // Tail fins
-  const tail = BABYLON.MeshBuilder.CreateBox(name + "_tail",
-    { width: 2, height: 0.12, depth: 0.8 }, scene);
-  tail.position = new BABYLON.Vector3(0, 0.3, -1.6);
-  tail.parent = root;
+  function part(mesh) {
+    mesh.material = mat;
+    mesh.parent   = root;
+    shadows.addShadowCaster(mesh);
+    return mesh;
+  }
 
-  // Material
-  const mat = new BABYLON.StandardMaterial(name + "_mat", scene);
-  mat.diffuseColor   = color;
-  mat.specularColor  = new BABYLON.Color3(0.6, 0.6, 0.6);
-  mat.specularPower  = 64;
-  mat.emissiveColor  = color.scale(0.05);
-  [body, wingL, tail].forEach(m => m.material = mat);
+  // Fuselage — lathe profile (nose-to-tail along Z)
+  const profile = [
+    new BABYLON.Vector3(0.04, 0, 0),   // nose tip
+    new BABYLON.Vector3(0.16, 0, 0.5),
+    new BABYLON.Vector3(0.28, 0, 1.2), // cockpit start
+    new BABYLON.Vector3(0.30, 0, 2.0), // widest
+    new BABYLON.Vector3(0.26, 0, 3.5),
+    new BABYLON.Vector3(0.22, 0, 5.0),
+    new BABYLON.Vector3(0.20, 0, 6.0), // tail end
+    new BABYLON.Vector3(0.28, 0, 6.4), // engine bell
+  ];
+  const fuselage = BABYLON.MeshBuilder.CreateLathe(name + "_fus", {
+    shape: profile, tessellation: 14,
+    cap: BABYLON.Mesh.CAP_ALL, sideOrientation: BABYLON.Mesh.DOUBLESIDE,
+  }, scene);
+  fuselage.rotation.x = Math.PI / 2;
+  fuselage.position.z = -3.2;
+  part(fuselage);
+
+  // Wings — swept delta (flat box, very thin, angled)
+  function wing(side) {
+    const w = BABYLON.MeshBuilder.CreateBox(name + "_w" + side,
+      { width: 3.6, height: 0.07, depth: 2.2 }, scene);
+    w.position = new BABYLON.Vector3(side * 1.8, -0.05, 0.6);
+    w.rotation.y = side * 0.28;   // sweep angle
+    part(w);
+  }
+  wing(1); wing(-1);
+
+  // Horizontal stabilizers (smaller, at tail)
+  function stab(side) {
+    const s = BABYLON.MeshBuilder.CreateBox(name + "_s" + side,
+      { width: 1.6, height: 0.06, depth: 1.0 }, scene);
+    s.position = new BABYLON.Vector3(side * 0.8, 0.0, 2.4);
+    s.rotation.y = side * 0.15;
+    part(s);
+  }
+  stab(1); stab(-1);
+
+  // Vertical tail fin
+  const fin = BABYLON.MeshBuilder.CreateBox(name + "_fin",
+    { width: 0.08, height: 1.1, depth: 1.4 }, scene);
+  fin.position = new BABYLON.Vector3(0, 0.55, 2.2);
+  part(fin);
+
+  // Cockpit canopy
+  const canopyMat = new BABYLON.PBRMaterial(name + "_can", scene);
+  canopyMat.albedoColor = new BABYLON.Color3(0.4, 0.6, 0.9);
+  canopyMat.metallic    = 0.3;
+  canopyMat.roughness   = 0.05;
+  canopyMat.alpha       = 0.55;
+  const canopy = BABYLON.MeshBuilder.CreateSphere(name + "_canopy",
+    { diameterX: 0.52, diameterY: 0.32, diameterZ: 0.9 }, scene);
+  canopy.position = new BABYLON.Vector3(0, 0.28, -0.8);
+  canopy.parent   = root;
+  canopy.material = canopyMat;
 
   return root;
 }
 
-const agentMesh = buildAircraftMesh("agent",
-  new BABYLON.Color3(0.2, 0.5, 1.0));    // blue
-const oppMesh   = buildAircraftMesh("opp",
-  new BABYLON.Color3(1.0, 0.2, 0.1));    // red
+// Try to load GLB from CDN; fall back to procedural
+const GLB_URLS = [
+  '/static/models/jet.glb',
+  'https://assets.babylonjs.com/meshes/vintagePlane.glb',
+];
 
-camera.lockedTarget = agentMesh;
+async function loadAircraftMesh(name, albedo, glbUrls) {
+  for (const url of glbUrls) {
+    try {
+      const result = await BABYLON.SceneLoader.ImportMeshAsync(
+        '', url.substring(0, url.lastIndexOf('/') + 1),
+        url.substring(url.lastIndexOf('/') + 1),
+        scene
+      );
+      if (result.meshes.length === 0) continue;
+
+      // Group under a root transform
+      const root = new BABYLON.TransformNode(name + "_glb_root", scene);
+      result.meshes.forEach(m => {
+        if (!m.parent) m.parent = root;
+        // Override material to look military
+        const mat = new BABYLON.PBRMaterial(name + "_glb_mat_" + m.name, scene);
+        mat.albedoColor = albedo;
+        mat.metallic    = 0.85;
+        mat.roughness   = 0.2;
+        m.material = mat;
+        shadows.addShadowCaster(m);
+      });
+
+      // Scale to consistent combat size
+      root.scaling = new BABYLON.Vector3(0.12, 0.12, 0.12);
+      console.log(`  ${name}: loaded GLB from ${url}`);
+      return root;
+    } catch(e) {
+      console.warn(`  ${name}: GLB failed (${url}) — ${e.message || e}`);
+    }
+  }
+
+  // All GLB attempts failed — use procedural
+  console.log(`  ${name}: using procedural mesh`);
+  return buildJet(name, albedo);
+}
+
+// Load both aircraft async
+const AGENT_COLOR = new BABYLON.Color3(0.18, 0.38, 0.72);  // steel blue
+const OPP_COLOR   = new BABYLON.Color3(0.68, 0.10, 0.08);  // dark red
+
+Promise.all([
+  loadAircraftMesh('agent', AGENT_COLOR, GLB_URLS),
+  loadAircraftMesh('opp',   OPP_COLOR,   GLB_URLS),
+]).then(([a, o]) => {
+  agentRoot = a;
+  oppRoot   = o;
+  camera.lockedTarget = agentRoot;
+  modelsReady = true;
+
+  // Engine glow particles on both
+  makeEngineGlow(agentRoot, new BABYLON.Color4(0.3, 0.55, 1.0, 1.0));
+  makeEngineGlow(oppRoot,   new BABYLON.Color4(1.0, 0.3, 0.1, 1.0));
+});
 
 // ============================================================
-// PARTICLE SYSTEMS — ENGINE GLOW + MISSILE FIRE + EXPLOSION
+// PARTICLE SYSTEMS
 // ============================================================
 
-// Agent engine glow
+const FLARE_TEX = "https://playground.babylonjs.com/textures/flare.png";
+
 function makeEngineGlow(parent, color) {
-  const ps = new BABYLON.ParticleSystem("glow", 200, scene);
-  ps.particleTexture = new BABYLON.Texture(
-    "https://playground.babylonjs.com/textures/flare.png", scene);
-  ps.emitter  = parent;
-  ps.minEmitBox = new BABYLON.Vector3(-0.1, 0, -2.2);
-  ps.maxEmitBox = new BABYLON.Vector3( 0.1, 0, -2.0);
-  ps.color1 = color;
-  ps.color2 = new BABYLON.Color4(1, 1, 1, 0.8);
+  const ps = new BABYLON.ParticleSystem("glow_" + Math.random(), 250, scene);
+  ps.particleTexture = new BABYLON.Texture(FLARE_TEX, scene);
+  ps.emitter = parent;
+  ps.minEmitBox = new BABYLON.Vector3(-0.15, -0.1, 2.0);
+  ps.maxEmitBox = new BABYLON.Vector3( 0.15,  0.1, 2.5);
+  ps.color1    = color;
+  ps.color2    = new BABYLON.Color4(1, 1, 1, 0.9);
   ps.colorDead = new BABYLON.Color4(0, 0, 0, 0);
-  ps.minSize = 0.2; ps.maxSize = 0.6;
-  ps.minLifeTime = 0.05; ps.maxLifeTime = 0.15;
-  ps.emitRate = 120;
+  ps.minSize = 0.15; ps.maxSize = 0.5;
+  ps.minLifeTime = 0.04; ps.maxLifeTime = 0.12;
+  ps.emitRate  = 140;
   ps.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
-  ps.direction1 = new BABYLON.Vector3(-0.1, -0.1, -1);
-  ps.direction2 = new BABYLON.Vector3( 0.1,  0.1, -1);
-  ps.minEmitPower = 3; ps.maxEmitPower = 6;
-  ps.updateSpeed = 0.02;
+  ps.direction1 = new BABYLON.Vector3(-0.05, -0.05, 1);
+  ps.direction2 = new BABYLON.Vector3( 0.05,  0.05, 1);
+  ps.minEmitPower = 4; ps.maxEmitPower = 8;
+  ps.updateSpeed  = 0.02;
   ps.start();
   return ps;
 }
 
-const agentGlow = makeEngineGlow(agentMesh, new BABYLON.Color4(0.3, 0.6, 1.0, 1.0));
-const oppGlow   = makeEngineGlow(oppMesh,   new BABYLON.Color4(1.0, 0.3, 0.1, 1.0));
+// Muzzle flash (trigger-based)
+let agentMuzzle = null, oppMuzzle = null;
 
-// Missile fire flash
-function makeMuzzleFlash(parent) {
-  const ps = new BABYLON.ParticleSystem("muzzle", 80, scene);
-  ps.particleTexture = new BABYLON.Texture(
-    "https://playground.babylonjs.com/textures/flare.png", scene);
-  ps.emitter    = parent;
-  ps.minEmitBox = new BABYLON.Vector3(-0.3, -0.1, 2);
-  ps.maxEmitBox = new BABYLON.Vector3( 0.3,  0.1, 2.5);
-  ps.color1 = new BABYLON.Color4(1, 0.8, 0.2, 1);
-  ps.color2 = new BABYLON.Color4(1, 0.4, 0.0, 0.8);
-  ps.colorDead = new BABYLON.Color4(0.2, 0.1, 0, 0);
-  ps.minSize = 0.1; ps.maxSize = 0.4;
-  ps.minLifeTime = 0.04; ps.maxLifeTime = 0.1;
-  ps.emitRate = 0;   // triggered manually
+function makeMuzzle(parent, colorHex) {
+  const ps = new BABYLON.ParticleSystem("muzzle_" + Math.random(), 100, scene);
+  ps.particleTexture = new BABYLON.Texture(FLARE_TEX, scene);
+  ps.emitter = parent;
+  ps.minEmitBox = new BABYLON.Vector3(-0.2, -0.1, -2.5);
+  ps.maxEmitBox = new BABYLON.Vector3( 0.2,  0.1, -2.0);
+  ps.color1    = new BABYLON.Color4(1, 0.85, 0.3, 1);
+  ps.color2    = new BABYLON.Color4(1, 0.4,  0.0, 0.8);
+  ps.colorDead = new BABYLON.Color4(0.15, 0.1, 0, 0);
+  ps.minSize = 0.1; ps.maxSize = 0.35;
+  ps.minLifeTime = 0.03; ps.maxLifeTime = 0.09;
+  ps.emitRate  = 0;
   ps.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
-  ps.minEmitPower = 5; ps.maxEmitPower = 12;
-  ps.direction1 = new BABYLON.Vector3(-0.2, -0.2, 1);
-  ps.direction2 = new BABYLON.Vector3( 0.2,  0.2, 1);
+  ps.minEmitPower = 6; ps.maxEmitPower = 14;
+  ps.direction1 = new BABYLON.Vector3(-0.2, -0.2, -1);
+  ps.direction2 = new BABYLON.Vector3( 0.2,  0.2, -1);
   ps.start();
   return ps;
 }
 
-const agentMuzzle = makeMuzzleFlash(agentMesh);
-const oppMuzzle   = makeMuzzleFlash(oppMesh);
-
-// Explosion
+// Explosion on death
 function triggerExplosion(position) {
-  const ps = new BABYLON.ParticleSystem("expl", 600, scene);
-  ps.particleTexture = new BABYLON.Texture(
-    "https://playground.babylonjs.com/textures/flare.png", scene);
-  ps.emitter    = position.clone();
-  ps.minEmitBox = new BABYLON.Vector3(-1, -1, -1);
-  ps.maxEmitBox = new BABYLON.Vector3( 1,  1,  1);
-  ps.color1    = new BABYLON.Color4(1.0, 0.6, 0.1, 1);
-  ps.color2    = new BABYLON.Color4(0.8, 0.2, 0.0, 0.8);
+  const ps = new BABYLON.ParticleSystem("expl", 700, scene);
+  ps.particleTexture = new BABYLON.Texture(FLARE_TEX, scene);
+  ps.emitter = position.clone();
+  ps.minEmitBox = new BABYLON.Vector3(-1.5, -1.5, -1.5);
+  ps.maxEmitBox = new BABYLON.Vector3( 1.5,  1.5,  1.5);
+  ps.color1    = new BABYLON.Color4(1.0, 0.65, 0.1, 1);
+  ps.color2    = new BABYLON.Color4(0.9, 0.2,  0.0, 0.8);
   ps.colorDead = new BABYLON.Color4(0.1, 0.1, 0.1, 0);
-  ps.minSize = 0.5; ps.maxSize = 3.5;
-  ps.minLifeTime = 0.4; ps.maxLifeTime = 1.2;
-  ps.emitRate   = 800;
-  ps.blendMode  = BABYLON.ParticleSystem.BLENDMODE_ADD;
-  ps.minEmitPower = 8; ps.maxEmitPower = 20;
+  ps.minSize = 0.6; ps.maxSize = 4.0;
+  ps.minLifeTime = 0.4; ps.maxLifeTime = 1.4;
+  ps.emitRate  = 900;
+  ps.gravity   = new BABYLON.Vector3(0, -5, 0);
+  ps.blendMode = BABYLON.ParticleSystem.BLENDMODE_ADD;
+  ps.minEmitPower = 10; ps.maxEmitPower = 25;
   ps.direction1 = new BABYLON.Vector3(-1, -1, -1);
   ps.direction2 = new BABYLON.Vector3( 1,  1,  1);
-  ps.gravity    = new BABYLON.Vector3(0, -4, 0);
-  ps.updateSpeed = 0.02;
+  ps.updateSpeed = 0.018;
   ps.start();
-  setTimeout(() => ps.stop(), 300);
-  setTimeout(() => ps.dispose(), 2000);
+  setTimeout(() => { ps.stop(); }, 280);
+  setTimeout(() => { try { ps.dispose(); } catch(e) {} }, 2200);
 
   // Screen flash
-  const flash = document.getElementById('flash');
-  flash.style.background = 'radial-gradient(circle, rgba(255,180,50,0.6) 0%, transparent 70%)';
-  flash.style.opacity = '1';
-  setTimeout(() => flash.style.opacity = '0', 400);
+  const fl = document.getElementById('flash');
+  fl.style.background = 'radial-gradient(circle, rgba(255,170,50,0.55) 0%, transparent 65%)';
+  fl.style.opacity = '1';
+  setTimeout(() => { fl.style.opacity = '0'; }, 500);
 }
 
 // ============================================================
-// POST-PROCESSING PIPELINE
+// POST-PROCESSING
 // ============================================================
 
-const pipeline = new BABYLON.DefaultRenderingPipeline("pip", true, scene, [camera]);
-pipeline.bloomEnabled    = true;
-pipeline.bloomThreshold  = 0.6;
-pipeline.bloomWeight     = 0.4;
-pipeline.bloomKernel     = 64;
-pipeline.bloomScale      = 0.5;
-pipeline.fxaaEnabled     = true;
-pipeline.imageProcessingEnabled = true;
-pipeline.imageProcessing.contrast   = 1.2;
-pipeline.imageProcessing.exposure   = 1.1;
-pipeline.imageProcessing.toneMappingEnabled = true;
-pipeline.imageProcessing.toneMappingType =
-  BABYLON.ImageProcessingConfiguration.TONEMAPPING_ACES;
+const pipeline = new BABYLON.DefaultRenderingPipeline("main", true, scene, [camera]);
+pipeline.bloomEnabled   = true;
+pipeline.bloomThreshold = 0.55;
+pipeline.bloomWeight    = 0.45;
+pipeline.bloomKernel    = 64;
+pipeline.bloomScale     = 0.5;
+pipeline.fxaaEnabled    = true;
 
-// Chromatic aberration for degraded mode (graceful fallback if unavailable)
+pipeline.imageProcessingEnabled = true;
+pipeline.imageProcessing.contrast  = 1.25;
+pipeline.imageProcessing.exposure  = 1.15;
+try {
+  pipeline.imageProcessing.toneMappingEnabled = true;
+  pipeline.imageProcessing.toneMappingType =
+    BABYLON.ImageProcessingConfiguration.TONEMAPPING_ACES;
+} catch(e) {}
+
+// Chromatic aberration (degraded mode)
 let lensEffect = null;
 try {
   lensEffect = new BABYLON.LensRenderingPipeline(
     "lens", { edge_blur: 0, chromatic_aberration: 0, distortion: 0 },
     scene, 1.0, [camera]);
-} catch(e) { /* LensRenderingPipeline unavailable — skip */ }
+} catch(e) {}
 
 // ============================================================
 // WEBSOCKET
 // ============================================================
 
-let ws, latestState = null, connected = false;
-let mode = 'manual';
+let ws = null;
+let connected   = false;
+let latestState = null;
+let mode        = 'manual';
+let epReward    = 0;
 
 function connect() {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
@@ -337,294 +703,72 @@ function connect() {
 
   ws.onopen = () => {
     connected = true;
+    document.getElementById('sb-conn').textContent = '● LIVE';
+    document.getElementById('sb-conn').style.color = '#00ff00';
     ws.send(JSON.stringify({ type: 'set_mode', mode }));
   };
-
   ws.onmessage = e => {
-    latestState = JSON.parse(e.data);
-    if (latestState.type === 'mode_changed') return;
-    updateScene(latestState);
+    const s = JSON.parse(e.data);
+    if (s.type === 'mode_changed') return;
+    latestState = s;
+    if (s.done) epReward = 0;
+    else epReward += (s.reward || 0);
   };
-
   ws.onclose = () => {
     connected = false;
+    document.getElementById('sb-conn').textContent = '● RECONNECTING';
+    document.getElementById('sb-conn').style.color = '#ffaa00';
     setTimeout(connect, 2000);
   };
+  ws.onerror = () => ws.close();
 }
 
 connect();
 
 // ============================================================
-// KEYBOARD INPUT
+// KEYBOARD INPUT — event-driven
 // ============================================================
 
-const keys = {};
-document.addEventListener('keydown', e => {
-  keys[e.key] = true;
-  if (e.key === 'r' || e.key === 'R') sendReset();
-});
-document.addEventListener('keyup', e => keys[e.key] = false);
+const keys = { throttle:0, pitch:0, roll:0, yaw:0 };
 
-let inputInterval = setInterval(() => {
-  if (!connected || mode !== 'manual') return;
-  ws.send(JSON.stringify({
-    type:     'input',
-    throttle: (keys['w'] || keys['W']) ? 1.0 : (keys['s'] || keys['S']) ? -1.0 : 0.0,
-    pitch:    keys['ArrowUp']    ? 1.0 : keys['ArrowDown']  ? -1.0 : 0.0,
-    yaw:      (keys['a'] || keys['A']) ? -1.0 : (keys['d'] || keys['D']) ? 1.0 : 0.0,
-    roll:     (keys['q'] || keys['Q']) ? -1.0 : (keys['e'] || keys['E']) ? 1.0 : 0.0,
-  }));
-}, 33);  // ~30fps input
+function sendInput() {
+  if (connected && mode === 'manual')
+    ws.send(JSON.stringify({ type:'input', ...keys }));
+}
+
+document.addEventListener('keydown', e => {
+  if (e.repeat) return;
+  let changed = true;
+  switch(e.key) {
+    case 'w': case 'W': keys.throttle =  1.0; break;
+    case 's': case 'S': keys.throttle = -1.0; break;
+    case 'ArrowUp':     keys.pitch =  1.0; e.preventDefault(); break;
+    case 'ArrowDown':   keys.pitch = -1.0; e.preventDefault(); break;
+    case 'a': case 'A': keys.yaw   = -1.0; break;
+    case 'd': case 'D': keys.yaw   =  1.0; break;
+    case 'q': case 'Q': keys.roll  = -1.0; break;
+    case 'e': case 'E': keys.roll  =  1.0; break;
+    case 'r': case 'R': sendReset(); changed=false; break;
+    default: changed = false;
+  }
+  if (changed) sendInput();
+});
+
+document.addEventListener('keyup', e => {
+  let changed = true;
+  switch(e.key) {
+    case 'w': case 'W': case 's': case 'S': keys.throttle = 0; break;
+    case 'ArrowUp': case 'ArrowDown':        keys.pitch    = 0; break;
+    case 'a': case 'A': case 'd': case 'D': keys.yaw      = 0; break;
+    case 'q': case 'Q': case 'e': case 'E': keys.roll     = 0; break;
+    default: changed = false;
+  }
+  if (changed) sendInput();
+});
 
 function sendReset() {
-  if (connected) ws.send(JSON.stringify({ type: 'reset' }));
-}
-
-// ============================================================
-// SCENE UPDATE — called every time a state arrives
-// ============================================================
-
-let prevAgentHealth = 100, prevOppHealth = 100;
-let trailPoints = [], trailMax = 120;
-let trailLines  = null;
-
-function vec3(arr) {
-  return new BABYLON.Vector3(arr[0] / 10, arr[2] / 10, arr[1] / 10);
-}
-
-function updateScene(s) {
-  if (!s.agent) return;
-
-  // Move aircraft
-  const ap = vec3(s.agent.pos);
-  const op = vec3(s.opponent.pos);
-
-  agentMesh.position.copyFrom(ap);
-  oppMesh.position.copyFrom(op);
-
-  // Heading → rotation
-  agentMesh.rotation.y = -s.agent.heading;
-  oppMesh.rotation.y   = -s.opponent.heading;
-
-  // Pitch from vertical velocity
-  const pv = s.agent.vel[2] / 50.0;
-  agentMesh.rotation.z = Math.max(-0.6, Math.min(0.6, pv));
-
-  // Muzzle flash when in range
-  if (s.in_range) {
-    agentMuzzle.emitRate = 80;
-    setTimeout(() => agentMuzzle.emitRate = 0, 80);
-  }
-  if (s.opp_in_range) {
-    oppMuzzle.emitRate = 60;
-    setTimeout(() => oppMuzzle.emitRate = 0, 80);
-  }
-
-  // Degraded mode — chromatic aberration
-  if (lensEffect) {
-    lensEffect.setEdgeBlur(s.mode === 'degraded' ? 1.2 : 0);
-    lensEffect.setChromaticAberration(s.mode === 'degraded' ? 2.0 : 0);
-  }
-
-  // Explosion on kill/death
-  if (prevOppHealth > 0 && s.opponent.health <= 0) triggerExplosion(op);
-  if (prevAgentHealth > 0 && s.agent.health <= 0)  triggerExplosion(ap);
-  prevAgentHealth = s.agent.health;
-  prevOppHealth   = s.opponent.health;
-
-  // Agent trail
-  trailPoints.push(ap.clone());
-  if (trailPoints.length > trailMax) trailPoints.shift();
-  if (trailLines) trailLines.dispose();
-  if (trailPoints.length > 2) {
-    trailLines = BABYLON.MeshBuilder.CreateLines("trail",
-      { points: trailPoints, updatable: false }, scene);
-    trailLines.color = new BABYLON.Color3(0.2, 0.5, 1.0);
-    trailLines.alpha = 0.35;
-  }
-
-  // EDT panel
-  if (s.done && s.edt) showEDT(s.edt);
-  if (!s.done) hideEDT();
-}
-
-function showEDT(edt) {
-  const panel = document.getElementById('edtPanel');
-  panel.style.display = 'block';
-  document.getElementById('edt-failure').textContent = edt.failure_mode  || '—';
-  document.getElementById('edt-fix').textContent     = edt.fix_type      || '—';
-  document.getElementById('edt-conf').textContent    = edt.fix_conf
-    ? (edt.fix_conf * 100).toFixed(0) + '%' : '—';
-  document.getElementById('edt-steps').textContent   =
-    (edt.critical_steps || []).join(', ') || '—';
-  document.getElementById('edt-advice').textContent  = edt.error
-    ? 'EDT not available'
-    : getAdvice(edt.fix_type);
-}
-
-function hideEDT() {
-  document.getElementById('edtPanel').style.display = 'none';
-}
-
-const ADVICE = {
-  NO_FIX_NEEDED:          'Agent performing optimally.',
-  ADD_ALTITUDE_PENALTY:   'if altitude < 200:\n  reward -= (200-alt)/200 * 5.0',
-  REDUCE_PROXIMITY_RANGE: 'Gate proximity reward to <=1000 m.',
-  ADD_FIRING_BONUS:       'if agent_fired:\n  reward += 1.5',
-  INCREASE_KILL_REWARD:   'if kill:\n  reward += 150.0  # was 100',
-  FIX_OPP_ADVANTAGE:      'Increase agent engagement_range to 700 m.',
-};
-function getAdvice(fix) { return ADVICE[fix] || fix; }
-
-// ============================================================
-// HUD — Canvas 2D Military Overlay
-// ============================================================
-
-const hud    = document.getElementById('hudCanvas');
-const ctx    = hud.getContext('2d');
-
-function resizeHUD() {
-  hud.width  = window.innerWidth;
-  hud.height = window.innerHeight;
-}
-resizeHUD();
-window.addEventListener('resize', resizeHUD);
-
-function drawHUD(s) {
-  const W = hud.width, H = hud.height;
-  ctx.clearRect(0, 0, W, H);
-  if (!s || !s.agent) return;
-
-  const GREEN  = '#00ff00';
-  const AMBER  = '#ffaa00';
-  const RED    = '#ff2222';
-  const DIM    = 'rgba(0,255,0,0.35)';
-
-  ctx.shadowBlur  = 6;
-  ctx.shadowColor = GREEN;
-
-  // ---- Health bars ----
-  function drawHealth(label, value, x, y, color) {
-    ctx.fillStyle = 'rgba(0,20,0,0.7)';
-    ctx.fillRect(x, y, 160, 18);
-    const barColor = value > 60 ? GREEN : value > 30 ? AMBER : RED;
-    ctx.fillStyle = barColor;
-    ctx.fillRect(x + 2, y + 2, (value / 100) * 156, 14);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1;
-    ctx.strokeRect(x, y, 160, 18);
-    ctx.fillStyle = color;
-    ctx.font = 'bold 11px Courier New';
-    ctx.fillText(`${label}  ${value.toFixed(0)}%`, x + 4, y + 13);
-  }
-
-  drawHealth('AGENT HP', Math.max(0, s.agent.health),    W/2 - 170, H - 80, GREEN);
-  drawHealth('BANDIT HP', Math.max(0, s.opponent.health), W/2 + 10,  H - 80, RED);
-
-  // ---- Altitude tape (left) ----
-  const alt   = (s.agent.pos[2]).toFixed(0);
-  const speed = Math.sqrt(s.agent.vel[0]**2 + s.agent.vel[1]**2 + s.agent.vel[2]**2).toFixed(0);
-  ctx.fillStyle = 'rgba(0,10,0,0.75)';
-  ctx.fillRect(20, H/2 - 60, 80, 120);
-  ctx.strokeStyle = DIM; ctx.lineWidth = 1;
-  ctx.strokeRect(20, H/2 - 60, 80, 120);
-  ctx.fillStyle = GREEN; ctx.font = 'bold 12px Courier New';
-  ctx.fillText('ALT', 30, H/2 - 40);
-  ctx.font = 'bold 18px Courier New';
-  ctx.fillText(alt + 'm', 24, H/2);
-  ctx.font = 'bold 12px Courier New';
-  ctx.fillText('SPD', 30, H/2 + 30);
-  ctx.font = 'bold 18px Courier New';
-  ctx.fillText(speed, 24, H/2 + 50);
-
-  // ---- Distance indicator (centre-top) ----
-  const dist   = s.distance;
-  const inRange = s.in_range;
-  ctx.fillStyle = 'rgba(0,10,0,0.75)';
-  ctx.fillRect(W/2 - 80, 60, 160, 36);
-  ctx.strokeStyle = inRange ? '#ff4444' : DIM;
-  ctx.lineWidth   = inRange ? 2 : 1;
-  ctx.strokeRect(W/2 - 80, 60, 160, 36);
-  ctx.fillStyle = inRange ? RED : GREEN;
-  ctx.font      = 'bold 13px Courier New';
-  ctx.textAlign = 'center';
-  ctx.fillText(inRange ? '⚠ IN RANGE' : 'RANGE  ' + dist.toFixed(0) + 'm', W/2, 83);
-  ctx.textAlign = 'left';
-
-  // ---- Radar (bottom-right) ----
-  const rx = W - 110, ry = H - 110, rr = 80;
-  ctx.beginPath();
-  ctx.arc(rx, ry, rr, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(0,20,0,0.75)';
-  ctx.fill();
-  ctx.strokeStyle = DIM; ctx.lineWidth = 1;
-  ctx.stroke();
-
-  // Radar range rings
-  [0.33, 0.66, 1.0].forEach(f => {
-    ctx.beginPath();
-    ctx.arc(rx, ry, rr * f, 0, Math.PI * 2);
-    ctx.strokeStyle = 'rgba(0,100,0,0.3)'; ctx.lineWidth = 0.5;
-    ctx.stroke();
-  });
-
-  // Sweep line
-  const sweepAngle = (Date.now() / 1200) % (Math.PI * 2);
-  ctx.beginPath();
-  ctx.moveTo(rx, ry);
-  ctx.lineTo(rx + Math.cos(sweepAngle) * rr, ry + Math.sin(sweepAngle) * rr);
-  ctx.strokeStyle = 'rgba(0,255,0,0.5)'; ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  // Agent dot (centre)
-  ctx.beginPath();
-  ctx.arc(rx, ry, 4, 0, Math.PI * 2);
-  ctx.fillStyle = GREEN; ctx.fill();
-
-  // Bandit blip
-  const relX = (s.opponent.pos[0] - s.agent.pos[0]) / 150;
-  const relY = (s.opponent.pos[1] - s.agent.pos[1]) / 150;
-  const bx   = rx + Math.max(-rr + 5, Math.min(rr - 5, relX * rr));
-  const by   = ry + Math.max(-rr + 5, Math.min(rr - 5, relY * rr));
-  ctx.beginPath();
-  ctx.arc(bx, by, 5, 0, Math.PI * 2);
-  ctx.fillStyle = RED; ctx.fill();
-
-  // ---- Kill/Death counter ----
-  ctx.fillStyle = 'rgba(0,10,0,0.75)';
-  ctx.fillRect(W - 130, 20, 110, 36);
-  ctx.strokeStyle = DIM; ctx.lineWidth = 1;
-  ctx.strokeRect(W - 130, 20, 110, 36);
-  ctx.fillStyle = GREEN; ctx.font = 'bold 12px Courier New';
-  ctx.fillText(`K:${s.kills || 0}  D:${s.deaths || 0}`, W - 120, 43);
-
-  // ---- Mode label ----
-  const modeLabel = { manual: 'MANUAL CTRL', ai: 'AI PILOT', degraded: 'DEGRADED AI' };
-  ctx.fillStyle = 'rgba(0,10,0,0.75)';
-  ctx.fillRect(20, 20, 150, 28);
-  ctx.strokeStyle = s.mode === 'degraded' ? AMBER : DIM;
-  ctx.strokeRect(20, 20, 150, 28);
-  ctx.fillStyle = s.mode === 'degraded' ? AMBER : GREEN;
-  ctx.font = 'bold 12px Courier New';
-  ctx.fillText('◈ ' + (modeLabel[s.mode] || s.mode.toUpperCase()), 28, 39);
-
-  // ---- Outcome flash ----
-  if (s.done && s.outcome) {
-    ctx.fillStyle = s.outcome === 'kill' ? 'rgba(0,255,0,0.15)' : 'rgba(255,0,0,0.15)';
-    ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = s.outcome === 'kill' ? GREEN : RED;
-    ctx.font = 'bold 48px Courier New';
-    ctx.textAlign = 'center';
-    const msg = s.outcome === 'kill' ? '✈ KILL CONFIRMED' :
-                s.outcome === 'crashed' ? '✈ AIRCRAFT LOST' : '✈ ' + s.outcome.toUpperCase();
-    ctx.fillText(msg, W/2, H/2);
-    ctx.textAlign = 'left';
-  }
-
-  // ---- Step counter ----
-  ctx.fillStyle = DIM;
-  ctx.font = '10px Courier New';
-  ctx.fillText(`STEP: ${s.step || 0}  EP: ${s.episode || 0}`, 22, H - 20);
+  if (connected) ws.send(JSON.stringify({ type:'reset' }));
+  epReward = 0;
 }
 
 // ============================================================
@@ -633,27 +777,343 @@ function drawHUD(s) {
 
 function setMode(m) {
   mode = m;
-  document.querySelectorAll('.modeBtn').forEach(b => b.classList.remove('active'));
+  ['manual','ai','degraded'].forEach(n => {
+    document.getElementById('btn-' + n).classList.remove('active');
+  });
   document.getElementById('btn-' + m).classList.add('active');
-  trailPoints = [];
-  hideEDT();
-  if (connected) ws.send(JSON.stringify({ type: 'set_mode', mode: m }));
 
-  // Show/hide controls hint
-  document.getElementById('controls').style.display =
-    m === 'manual' ? 'block' : 'none';
+  const labels = { manual:'MANUAL CTRL', ai:'AI PILOT', degraded:'DEGRADED AI' };
+  document.getElementById('sb-mode-badge').textContent = labels[m] || m.toUpperCase();
+  document.getElementById('sb-mode-row').textContent   = labels[m] || m.toUpperCase();
+  document.getElementById('ctrlHint').style.display    = m === 'manual' ? 'block' : 'none';
+
+  if (lensEffect) {
+    lensEffect.setEdgeBlur(m === 'degraded' ? 1.4 : 0);
+    lensEffect.setChromaticAberration(m === 'degraded' ? 2.5 : 0);
+  }
+
+  epReward = 0;
+  trailPoints = [];
+  if (connected) ws.send(JSON.stringify({ type:'set_mode', mode: m }));
+}
+
+// ============================================================
+// SCENE UPDATE
+// ============================================================
+
+let prevAgentHP = 100, prevOppHP = 100;
+let trailPoints = [], trailMesh = null;
+const TRAIL_LEN = 140;
+
+const EDT_ADVICE = {
+  NO_FIX_NEEDED:          'Agent performing optimally.\nNo reward changes required.',
+  ADD_ALTITUDE_PENALTY:   'if altitude < 200:\n  reward -= (200-alt)/200 * 7.5',
+  REDUCE_PROXIMITY_RANGE: 'Gate proximity reward to <=1000 m.\nproximity_range = max(700, current * 0.7)',
+  ADD_FIRING_BONUS:       'if agent_fired:\n  reward += 1.75  # was 1.0',
+  INCREASE_KILL_REWARD:   'if kill:\n  reward += 150.0  # was 100.0',
+  FIX_OPP_ADVANTAGE:      'Increase agent engagement_range to 700 m.\nReduce opp_engagement_range to 600 m.',
+};
+
+function toWorld(arr) {
+  // env coords (X=east, Y=north, Z=up) → Babylon (X, Y=up, Z)
+  return new BABYLON.Vector3(arr[0] / 10, arr[2] / 10, arr[1] / 10);
+}
+
+function updateScene(s) {
+  if (!s || !s.agent || !modelsReady) return;
+
+  const ap = toWorld(s.agent.pos);
+  const op = toWorld(s.opponent.pos);
+
+  agentRoot.position.copyFrom(ap);
+  oppRoot.position.copyFrom(op);
+
+  agentRoot.rotation.y = -s.agent.heading;
+  oppRoot.rotation.y   = -s.opponent.heading;
+
+  // Pitch from vertical velocity
+  const pv = Math.max(-0.5, Math.min(0.5, s.agent.vel[2] / 60.0));
+  agentRoot.rotation.z = pv;
+
+  // Muzzle flashes
+  if (agentMuzzle === null && agentRoot) agentMuzzle = makeMuzzle(agentRoot, '#ffaa00');
+  if (oppMuzzle   === null && oppRoot)   oppMuzzle   = makeMuzzle(oppRoot, '#ff4400');
+
+  if (s.in_range     && agentMuzzle) { agentMuzzle.emitRate = 90;  setTimeout(() => { if(agentMuzzle) agentMuzzle.emitRate = 0; }, 80); }
+  if (s.opp_in_range && oppMuzzle)   { oppMuzzle.emitRate   = 70;  setTimeout(() => { if(oppMuzzle)   oppMuzzle.emitRate   = 0; }, 80); }
+
+  // Explosions
+  if (prevOppHP > 0   && s.opponent.health <= 0) triggerExplosion(op);
+  if (prevAgentHP > 0 && s.agent.health    <= 0) triggerExplosion(ap);
+  prevAgentHP = s.agent.health;
+  prevOppHP   = s.opponent.health;
+
+  // Agent trail
+  trailPoints.push(ap.clone());
+  if (trailPoints.length > TRAIL_LEN) trailPoints.shift();
+  if (trailMesh) { trailMesh.dispose(); trailMesh = null; }
+  if (trailPoints.length > 2) {
+    trailMesh = BABYLON.MeshBuilder.CreateLines("trail",
+      { points: trailPoints }, scene);
+    trailMesh.color = new BABYLON.Color3(0.2, 0.5, 1.0);
+    trailMesh.alpha = 0.30;
+  }
+
+  // Degraded chromatic aberration
+  if (lensEffect) {
+    lensEffect.setEdgeBlur(s.mode === 'degraded' ? 1.4 : 0);
+    lensEffect.setChromaticAberration(s.mode === 'degraded' ? 2.5 : 0);
+  }
+}
+
+// ============================================================
+// SIDEBAR UPDATE
+// ============================================================
+
+const FMT = n => (typeof n === 'number' ? n.toFixed(1) : '—');
+
+function updateSidebar(s) {
+  if (!s || !s.agent) return;
+
+  // Mission
+  set('sb-ep',   s.episode ?? '—');
+  set('sb-step', `${s.step ?? '—'} / 1000`);
+
+  const outcomeMap = {
+    'kill':'✓ KILL CONFIRMED', 'died':'✗ AGENT LOST',
+    'crashed':'✗ CRASH', 'timeout':'⟳ TIMEOUT', '':'IN PROGRESS'
+  };
+  const outEl = document.getElementById('sb-outcome');
+  const outLabel = outcomeMap[s.outcome] || (s.done ? s.outcome.toUpperCase() : 'IN PROGRESS');
+  outEl.textContent = outLabel;
+  outEl.className   = 'sb-value ' + (s.outcome === 'kill' ? 'good' :
+                       s.outcome && s.outcome !== '' ? 'danger' : '');
+
+  // Telemetry
+  const vel   = s.agent.vel;
+  const speed = Math.sqrt(vel[0]**2 + vel[1]**2 + vel[2]**2);
+  const alt   = s.agent.pos[2];
+  const hdg   = ((s.agent.heading * 180 / Math.PI) % 360 + 360) % 360;
+  set('sb-spd',    speed.toFixed(0) + ' m/s');
+  set('sb-alt',    alt.toFixed(0) + ' m');
+  set('sb-hdg',    hdg.toFixed(0) + '°');
+  set('sb-dist',   s.distance.toFixed(0) + ' m');
+  set('sb-reward', epReward.toFixed(1));
+
+  const rangeEl = document.getElementById('sb-range');
+  if (s.in_range) {
+    rangeEl.textContent  = '⚠ IN RANGE';
+    rangeEl.className    = 'sb-value danger';
+  } else {
+    rangeEl.textContent  = 'CLEAR';
+    rangeEl.className    = 'sb-value';
+  }
+
+  // Health bars
+  const ah = Math.max(0, s.agent.health);
+  const oh = Math.max(0, s.opponent.health);
+
+  document.getElementById('hp-agent-bar').style.width = ah + '%';
+  document.getElementById('hp-opp-bar').style.width   = oh + '%';
+
+  const hpA = document.getElementById('hp-agent-pct');
+  hpA.textContent = ah.toFixed(0) + '%';
+  hpA.style.color = ah > 60 ? '#00cc00' : ah > 30 ? '#ffaa00' : '#ff3333';
+
+  const hpO = document.getElementById('hp-opp-pct');
+  hpO.textContent = oh.toFixed(0) + '%';
+  hpO.style.color = oh > 60 ? '#cc0000' : oh > 30 ? '#ff5500' : '#ff8800';
+
+  // Scores
+  const kd = s.deaths > 0 ? (s.kills / s.deaths).toFixed(2) : (s.kills > 0 ? '∞' : '—');
+  set('sb-kills',  s.kills  ?? 0);
+  set('sb-deaths', s.deaths ?? 0);
+  set('sb-kd',     kd);
+
+  const dmgPct = s.opponent ? ((100 - s.opponent.health)).toFixed(0) + '%' : '—';
+  set('sb-dmg', dmgPct);
+
+  // EDT
+  if (s.done && s.edt && !s.edt.error) {
+    const edt = s.edt;
+    document.getElementById('edt-pending').style.display  = 'none';
+    document.getElementById('edt-content').style.display  = 'block';
+    set('edt-fail',  edt.failure_mode || '—');
+    set('edt-fix',   edt.fix_type     || '—');
+    const conf = edt.fix_conf ?? 0;
+    set('edt-conf',  (conf * 100).toFixed(0) + '%');
+    document.getElementById('edt-conf-bar').style.width = (conf * 100) + '%';
+    set('edt-steps', (edt.critical_steps || []).join(', ') || '—');
+    set('edt-advice', EDT_ADVICE[edt.fix_type] || edt.fix_type || '—');
+  } else if (!s.done) {
+    document.getElementById('edt-pending').style.display  = 'block';
+    document.getElementById('edt-content').style.display  = 'none';
+    document.getElementById('edt-pending').textContent    = 'Awaiting episode completion…';
+  }
+}
+
+function set(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+// Robustness score — load from results if available
+fetch('/static/assets/robustness_summary.json')
+  .then(r => r.ok ? r.json() : null)
+  .then(d => {
+    if (d && d.diagonal_mean !== undefined)
+      set('sb-robust', d.diagonal_mean.toFixed(3));
+    else
+      set('sb-robust', 'N/A');
+  }).catch(() => set('sb-robust', 'N/A'));
+
+// ============================================================
+// HUD — Radar + Compass + Crosshair (minimal)
+// ============================================================
+
+const hud     = document.getElementById('hudCanvas');
+const ctx     = hud.getContext('2d');
+
+function resizeHUD() {
+  hud.width  = hud.offsetWidth;
+  hud.height = hud.offsetHeight;
+}
+resizeHUD();
+window.addEventListener('resize', () => { engine.resize(); resizeHUD(); });
+
+function drawHUD(s) {
+  const W = hud.width, H = hud.height;
+  ctx.clearRect(0, 0, W, H);
+  if (!s || !s.agent) return;
+
+  const GREEN = '#00ee00';
+  const DIM   = 'rgba(0,180,0,0.28)';
+  const RED   = '#ff2222';
+
+  ctx.shadowBlur  = 5;
+  ctx.shadowColor = '#00ff00';
+
+  // ---- Radar (bottom-right) ----
+  const rx = W - 100, ry = H - 100, rr = 78;
+
+  ctx.beginPath();
+  ctx.arc(rx, ry, rr, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,15,0,0.80)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(0,150,0,0.5)'; ctx.lineWidth = 1; ctx.stroke();
+
+  [0.33, 0.66].forEach(f => {
+    ctx.beginPath(); ctx.arc(rx, ry, rr * f, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(0,80,0,0.25)'; ctx.lineWidth = 0.5; ctx.stroke();
+  });
+
+  // Sweep
+  const sw = (Date.now() / 1100) % (Math.PI * 2);
+  ctx.beginPath();
+  ctx.moveTo(rx, ry);
+  ctx.lineTo(rx + Math.cos(sw) * rr, ry + Math.sin(sw) * rr);
+  ctx.strokeStyle = 'rgba(0,255,0,0.45)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // Agent dot
+  ctx.beginPath(); ctx.arc(rx, ry, 4, 0, Math.PI * 2);
+  ctx.fillStyle = GREEN; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0;
+
+  // Bandit blip
+  const RADAR_SCALE = 140;
+  const bx = rx + Math.max(-rr+6, Math.min(rr-6, (s.opponent.pos[0]-s.agent.pos[0])/RADAR_SCALE*rr));
+  const by = ry + Math.max(-rr+6, Math.min(rr-6, (s.opponent.pos[1]-s.agent.pos[1])/RADAR_SCALE*rr));
+  ctx.beginPath(); ctx.arc(bx, by, 5, 0, Math.PI * 2);
+  ctx.fillStyle = RED; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0;
+
+  // Label
+  ctx.fillStyle = DIM; ctx.font = '9px Courier New'; ctx.textAlign = 'center';
+  ctx.fillText('RADAR', rx, ry + rr + 12);
+  ctx.textAlign = 'left';
+
+  // ---- Compass strip (top-center) ----
+  const cw = 200, ch = 26;
+  const cx2 = W / 2, cy2 = 14;
+  const hdg = ((s.agent.heading * 180 / Math.PI) % 360 + 360) % 360;
+
+  ctx.fillStyle = 'rgba(0,12,0,0.82)';
+  ctx.fillRect(cx2 - cw/2, cy2, cw, ch);
+  ctx.strokeStyle = 'rgba(0,140,0,0.4)'; ctx.lineWidth = 1;
+  ctx.strokeRect(cx2 - cw/2, cy2, cw, ch);
+
+  // Tick marks
+  ctx.fillStyle = 'rgba(0,160,0,0.6)'; ctx.font = '8px Courier New';
+  ctx.textAlign = 'center';
+  for (let d = -40; d <= 40; d += 10) {
+    const x = cx2 + (d / 80) * cw;
+    const deg = ((hdg + d) % 360 + 360) % 360;
+    ctx.fillStyle = 'rgba(0,100,0,0.4)';
+    ctx.fillRect(x - 0.5, cy2 + 2, 1, 6);
+    ctx.fillStyle = 'rgba(0,200,0,0.7)';
+    ctx.fillText(Math.round(deg/10)*10, x, cy2 + 22);
+  }
+
+  // Centre marker
+  ctx.fillStyle = GREEN;
+  ctx.fillRect(cx2 - 1, cy2, 2, ch);
+  ctx.textAlign = 'left';
+
+  // ---- Crosshair (manual mode only) ----
+  if (s.mode === 'manual') {
+    const mx = W / 2, my = H / 2;
+    ctx.strokeStyle = 'rgba(0,255,0,0.5)'; ctx.lineWidth = 1;
+    ctx.shadowBlur = 4; ctx.shadowColor = '#0f0';
+    const size = 18, gap = 5;
+    ctx.beginPath();
+    ctx.moveTo(mx - size, my); ctx.lineTo(mx - gap, my);
+    ctx.moveTo(mx + gap, my);  ctx.lineTo(mx + size, my);
+    ctx.moveTo(mx, my - size); ctx.lineTo(mx, my - gap);
+    ctx.moveTo(mx, my + gap);  ctx.lineTo(mx, my + size);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // ---- Outcome overlay ----
+  if (s.done && s.outcome) {
+    const msg = {
+      kill:    'KILL CONFIRMED',
+      died:    'AGENT LOST',
+      crashed: 'AIRCRAFT LOST',
+      timeout: 'TIMEOUT',
+    }[s.outcome] || s.outcome.toUpperCase();
+
+    const col = s.outcome === 'kill' ? GREEN : RED;
+    ctx.fillStyle = s.outcome === 'kill'
+      ? 'rgba(0,255,0,0.08)' : 'rgba(255,0,0,0.08)';
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = col;
+    ctx.shadowBlur = 20; ctx.shadowColor = col;
+    ctx.font = 'bold 44px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText('✈  ' + msg, W/2, H/2);
+    ctx.font = '14px Courier New';
+    ctx.fillStyle = 'rgba(0,180,0,0.7)';
+    ctx.fillText('Restarting next episode…', W/2, H/2 + 40);
+    ctx.textAlign = 'left';
+    ctx.shadowBlur = 0;
+  }
 }
 
 // ============================================================
 // MAIN RENDER LOOP
 // ============================================================
 
+let frameN = 0;
 engine.runRenderLoop(() => {
   scene.render();
-  drawHUD(latestState);
-});
 
-window.addEventListener('resize', () => engine.resize());
+  if (latestState) {
+    updateScene(latestState);
+    drawHUD(latestState);
+    // Sidebar updates at ~10fps to avoid DOM thrash
+    if (frameN % 3 === 0) updateSidebar(latestState);
+  }
+  frameN++;
+});
 </script>
 </body>
 </html>
